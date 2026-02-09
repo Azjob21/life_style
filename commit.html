@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commit | Weekly Commitment Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: linear-gradient(135deg, #0f172a 0%, #1a2a47 100%);
+        color: #f8fafc;
+        font-family: "Inter", sans-serif;
+        overflow-x: hidden;
+      }
+      .app-container {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        height: 100vh;
+        gap: 0;
+      }
+      .sidebar {
+        background: rgba(15, 23, 42, 0.95);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-y: auto;
+        padding: 20px;
+      }
+      .main-content {
+        overflow-y: auto;
+        padding: 30px;
+      }
+      .glass-card {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(74, 222, 128, 0.3);
+      }
+      .commitment-tag {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .commitment-tag:hover {
+        transform: scale(1.05);
+      }
+      .calendar-day {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 400px;
+        position: relative;
+      }
+      .commitment-block {
+        padding: 8px 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid;
+        position: relative;
+      }
+      .commitment-block:hover {
+        transform: translateX(4px);
+        opacity: 0.9;
+      }
+      .commitment-block.active {
+        box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+      }
+      .modal.active {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-content {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 30px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 6px;
+      }
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #f8fafc;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #4ade80;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+      }
+      .color-picker {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+      .color-option {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .color-option:hover,
+      .color-option.selected {
+        border-color: white;
+        transform: scale(1.1);
+      }
+      .day-selector {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+      }
+      .day-selector label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.2s;
+      }
+      .day-selector label:hover {
+        background: rgba(74, 222, 128, 0.1);
+      }
+      .day-selector input {
+        width: 16px;
+        height: 16px;
+      }
+      .stat-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        flex: 1;
+        min-width: 200px;
+      }
+      .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        color: #4ade80;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 4px;
+        text-transform: uppercase;
+      }
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        color: #94a3b8;
+      }
+      .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      @media (max-width: 1024px) {
+        .app-container {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          border-right: none;
+          max-height: 250px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="mb-8">
+          <h1 class="text-3xl font-black text-green-400 mb-2">
+            <i class="fa-solid fa-circle-check mr-2"></i>Commit
+          </h1>
+          <p class="text-xs text-slate-400">Weekly Commitment Tracker</p>
+        </div>
+
+        <!-- Add Commitment Button -->
+        <button onclick="openAddModal()" class="btn-primary w-full mb-6">
+          <i class="fa-solid fa-plus mr-2"></i>New Commitment
+        </button>
+
+        <!-- Stats -->
+        <div class="mb-6">
+          <h3
+            class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest"
+          >
+            Stats
+          </h3>
+          <div class="glass-card p-4 text-center">
+            <div
+              class="text-2xl font-bold text-green-400"
+              id="totalCommitments"
+            >
+              0
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Active Commitments</p>
+          </div>
+        </div>
+
+        <!-- Commitments List -->
+        <div>
+          <h3
+            class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest"
+          >
+            Commitments
+          </h3>
+          <div id="commitmentsList" class="space-y-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+        <!-- Header -->
+        <div class="mb-8">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h2 class="text-3xl font-bold mb-2">This Week</h2>
+              <p class="text-slate-400 text-sm" id="weekDateRange">
+                Feb 3 - Feb 9, 2026
+              </p>
+            </div>
+            <button
+              onclick="resetWeek()"
+              class="px-4 py-2 rounded border border-slate-600 hover:border-red-500 hover:text-red-400 transition text-sm"
+            >
+              <i class="fa-solid fa-refresh mr-2"></i>Reset Week
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekly Calendar Grid -->
+        <div
+          id="weeklyCalendarContainer"
+          class="grid grid-cols-7 gap-3 mb-8 auto-cols-fr"
+        >
+          <!-- Days populated by JS -->
+        </div>
+
+        <!-- Dashboard: Active Commitments -->
+        <section class="glass-card p-6">
+          <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-dashboard text-green-400"></i>Dashboard
+          </h3>
+
+          <div
+            id="dashboardContainer"
+            class="grid grid-cols-1 lg:grid-cols-2 gap-4"
+          >
+            <!-- Populated by JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- MODAL: Add/Edit Commitment -->
+    <div id="commitmentModal" class="modal">
+      <div class="modal-content">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold" id="modalTitle">New Commitment</h2>
+          <button
+            onclick="closeModals()"
+            class="text-slate-400 hover:text-white text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <form onsubmit="saveCommitment(event)">
+          <!-- Name -->
+          <div class="form-group">
+            <label>Commitment Name</label>
+            <input
+              type="text"
+              id="commitmentName"
+              placeholder="e.g., AI/Game Dev Project"
+              required
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label>Description</label>
+            <textarea
+              id="commitmentDesc"
+              placeholder="What's this commitment about?"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <!-- Color -->
+          <div class="form-group">
+            <label>Color</label>
+            <div class="color-picker" id="colorPicker">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Days Selection -->
+          <div class="form-group">
+            <label>Select Days</label>
+            <div class="day-selector">
+              <label>
+                <input type="checkbox" name="days" value="0" />
+                <span>Mon</span>
+              </label>
+              <label>
+                <input type="checkbox" name="days" value="1" />
+                <span>Tue</span>
+              </label>
+              <label>
+                <input type="checkbox" name="days" value="2" />
+                <span>Wed</span>
+              </label>
+              <label>
+                <input type="checkbox" name="days" value="3" />
+                <span>Thu</span>
+              </label>
+              <label>
+                <input type="checkbox" name="days" value="4" />
+                <span>Fri</span>
+              </label>
+              <label>
+                <input type="checkbox" name="days" value="5" />
+                <span>Sat</span>
+              </label>
+              <label>
+                <input type="checkbox" name="days" value="6" />
+                <span>Sun</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Time Block -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+              <label>Start Time</label>
+              <input type="time" id="commitmentStartTime" value="09:00" />
+            </div>
+            <div class="form-group">
+              <label>End Time</label>
+              <input type="time" id="commitmentEndTime" value="12:00" />
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="commitmentPriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="btn-primary flex-1">
+              <i class="fa-solid fa-check mr-2"></i>Save Commitment
+            </button>
+            <button
+              type="button"
+              onclick="closeModals()"
+              class="flex-1 px-4 py-2 rounded border border-slate-600 hover:border-slate-500 transition"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <button
+            type="button"
+            id="deleteBtn"
+            onclick="deleteCommitment()"
+            class="w-full mt-4 px-4 py-2 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition hidden"
+          >
+            <i class="fa-solid fa-trash mr-2"></i>Delete Commitment
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Data Management
+      let commitments = [];
+      let editingId = null;
+      const colors = [
+        "#ef4444",
+        "#f97316",
+        "#eab308",
+        "#22c55e",
+        "#3b82f6",
+        "#8b5cf6",
+        "#ec4899",
+      ];
+
+      // Initialize App
+      document.addEventListener("DOMContentLoaded", () => {
+        loadCommitments();
+        renderWeeklyCalendar();
+        renderCommitmentsList();
+        renderDashboard();
+        updateStats();
+        initColorPicker();
+        updateWeekDateRange();
+      });
+
+      // Load from localStorage
+      function loadCommitments() {
+        const saved = localStorage.getItem("commitments");
+        commitments = saved ? JSON.parse(saved) : [];
+      }
+
+      // Save to localStorage
+      function saveCommitmentsToStorage() {
+        localStorage.setItem("commitments", JSON.stringify(commitments));
+      }
+
+      // Initialize Color Picker
+      function initColorPicker() {
+        const picker = document.getElementById("colorPicker");
+        picker.innerHTML = colors
+          .map(
+            (color) =>
+              `<div class="color-option" style="background: ${color}; border-color: #4ade80;" onclick="selectColor('${color}')"></div>`,
+          )
+          .join("");
+      }
+
+      // Color Selection
+      function selectColor(color) {
+        document.querySelectorAll(".color-option").forEach((el) => {
+          el.classList.remove("selected");
+        });
+        event.target.classList.add("selected");
+        document.getElementById("selectedColor").value = color;
+      }
+
+      // Open Add Modal
+      function openAddModal() {
+        editingId = null;
+        document.getElementById("modalTitle").textContent = "New Commitment";
+        document.getElementById("deleteBtn").classList.add("hidden");
+        document.getElementById("commitmentForm").reset();
+        document.getElementById("commitmentModal").classList.add("active");
+      }
+
+      // Open Edit Modal
+      function editCommitment(id) {
+        const commitment = commitments.find((c) => c.id === id);
+        if (!commitment) return;
+
+        editingId = id;
+        document.getElementById("modalTitle").textContent = "Edit Commitment";
+        document.getElementById("deleteBtn").classList.remove("hidden");
+        document.getElementById("commitmentName").value = commitment.name;
+        document.getElementById("commitmentDesc").value =
+          commitment.description;
+        document.getElementById("commitmentStartTime").value =
+          commitment.startTime;
+        document.getElementById("commitmentEndTime").value = commitment.endTime;
+        document.getElementById("commitmentPriority").value =
+          commitment.priority;
+        document.getElementById("selectedColor").value = commitment.color;
+
+        // Set selected days
+        document.querySelectorAll('input[name="days"]').forEach((checkbox) => {
+          checkbox.checked = commitment.days.includes(parseInt(checkbox.value));
+        });
+
+        document.getElementById("commitmentModal").classList.add("active");
+      }
+
+      // Close Modals
+      function closeModals() {
+        document.getElementById("commitmentModal").classList.remove("active");
+        editingId = null;
+      }
+
+      // Save Commitment
+      function saveCommitment(event) {
+        event.preventDefault();
+
+        const name = document.getElementById("commitmentName").value;
+        const description = document.getElementById("commitmentDesc").value;
+        const color =
+          document.getElementById("selectedColor").value || colors[0];
+        const startTime = document.getElementById("commitmentStartTime").value;
+        const endTime = document.getElementById("commitmentEndTime").value;
+        const priority = document.getElementById("commitmentPriority").value;
+
+        const selectedDays = Array.from(
+          document.querySelectorAll('input[name="days"]:checked'),
+        ).map((cb) => parseInt(cb.value));
+
+        if (!name || selectedDays.length === 0) {
+          alert("Please fill in all required fields");
+          return;
+        }
+
+        if (editingId) {
+          // Edit existing
+          const idx = commitments.findIndex((c) => c.id === editingId);
+          commitments[idx] = {
+            id: editingId,
+            name,
+            description,
+            color,
+            days: selectedDays,
+            startTime,
+            endTime,
+            priority,
+          };
+        } else {
+          // Add new
+          commitments.push({
+            id: Date.now(),
+            name,
+            description,
+            color,
+            days: selectedDays,
+            startTime,
+            endTime,
+            priority,
+          });
+        }
+
+        saveCommitmentsToStorage();
+        renderWeeklyCalendar();
+        renderCommitmentsList();
+        renderDashboard();
+        updateStats();
+        closeModals();
+      }
+
+      // Delete Commitment
+      function deleteCommitment() {
+        if (!editingId || !confirm("Delete this commitment?")) return;
+        commitments = commitments.filter((c) => c.id !== editingId);
+        saveCommitmentsToStorage();
+        renderWeeklyCalendar();
+        renderCommitmentsList();
+        renderDashboard();
+        updateStats();
+        closeModals();
+      }
+
+      // Render Weekly Calendar
+      function renderWeeklyCalendar() {
+        const container = document.getElementById("weeklyCalendarContainer");
+        container.innerHTML = "";
+
+        const daysNames = [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ];
+        const daysShort = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+        daysNames.forEach((day, dayIdx) => {
+          const dayCard = document.createElement("div");
+          dayCard.className = "calendar-day";
+
+          const dayCommitments = commitments.filter((c) =>
+            c.days.includes(dayIdx),
+          );
+
+          dayCard.innerHTML = `
+            <p class="font-bold text-sm mb-3 text-green-400">${daysShort[dayIdx]}</p>
+            <div class="space-y-2">
+              ${
+                dayCommitments.length === 0
+                  ? '<p class="text-xs text-slate-500 italic">No commitments</p>'
+                  : dayCommitments
+                      .map(
+                        (commitment) =>
+                          `
+                        <div 
+                          class="commitment-block" 
+                          style="background: ${commitment.color}20; border-left-color: ${commitment.color}; color: ${commitment.color};"
+                          onclick="editCommitment(${commitment.id})"
+                          title="${commitment.name}"
+                        >
+                          <div class="font-bold truncate">${commitment.name}</div>
+                          <div class="text-xs opacity-75">${commitment.startTime} - ${commitment.endTime}</div>
+                        </div>
+                      `,
+                      )
+                      .join("")
+              }
+            </div>
+          `;
+
+          container.appendChild(dayCard);
+        });
+      }
+
+      // Render Commitments List (Sidebar)
+      function renderCommitmentsList() {
+        const container = document.getElementById("commitmentsList");
+        if (commitments.length === 0) {
+          container.innerHTML =
+            '<p class="text-xs text-slate-500 italic">No commitments yet</p>';
+          return;
+        }
+
+        container.innerHTML = commitments
+          .map(
+            (commitment) =>
+              `
+          <div 
+            class="commitment-tag" 
+            style="background: ${commitment.color}20; border: 1px solid ${commitment.color}; color: ${commitment.color};"
+            onclick="editCommitment(${commitment.id})"
+            title="${commitment.name}"
+          >
+            ${commitment.name}
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      // Render Dashboard
+      function renderDashboard() {
+        const container = document.getElementById("dashboardContainer");
+
+        if (commitments.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-2">
+              <div class="empty-state">
+                <i class="fa-solid fa-inbox"></i>
+                <p>No active commitments</p>
+                <p class="text-xs mt-2">Click "New Commitment" to get started</p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = commitments
+          .map(
+            (commitment) => `
+          <div class="glass-card p-4 hover:border-green-500/50 transition cursor-pointer" onclick="editCommitment(${commitment.id})">
+            <div class="flex items-start justify-between mb-2">
+              <h4 class="font-bold flex items-center gap-2" style="color: ${commitment.color}">
+                <span style="width: 8px; height: 8px; background: ${commitment.color}; border-radius: 50%;"></span>
+                ${commitment.name}
+              </h4>
+              <span class="px-2 py-1 rounded text-xs font-bold" style="background: ${commitment.color}20; color: ${commitment.color};">
+                ${commitment.priority.toUpperCase()}
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">${commitment.description || "No description"}</p>
+            <div class="flex gap-2 items-center text-xs text-slate-500">
+              <i class="fa-solid fa-clock"></i>
+              ${commitment.startTime} - ${commitment.endTime}
+            </div>
+            <div class="flex gap-1 mt-3 flex-wrap">
+              ${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                .map(
+                  (day, idx) =>
+                    `<span class="px-2 py-1 rounded text-xs ${commitment.days.includes(idx) ? "bg-green-500/30 text-green-400" : "bg-slate-700/30 text-slate-500"}">${day}</span>`,
+                )
+                .join("")}
+            </div>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      // Update Stats
+      function updateStats() {
+        document.getElementById("totalCommitments").textContent =
+          commitments.length;
+      }
+
+      // Update Week Date Range
+      function updateWeekDateRange() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(
+          today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1),
+        );
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        const options = { month: "short", day: "numeric" };
+        const start = startOfWeek.toLocaleDateString("en-US", options);
+        const end = endOfWeek.toLocaleDateString("en-US", options);
+
+        document.getElementById("weekDateRange").textContent =
+          `${start} - ${end}, ${endOfWeek.getFullYear()}`;
+      }
+
+      // Reset Week
+      function resetWeek() {
+        if (confirm("Clear all commitments for this week?")) {
+          commitments = [];
+          saveCommitmentsToStorage();
+          renderWeeklyCalendar();
+          renderCommitmentsList();
+          renderDashboard();
+          updateStats();
+        }
+      }
+
+      // Hidden input for selected color
+      const hiddenInput = document.createElement("input");
+      hiddenInput.type = "hidden";
+      hiddenInput.id = "selectedColor";
+      hiddenInput.value = colors[0];
+      document.body.appendChild(hiddenInput);
+
+      // Create form element for form reset
+      const form = document.createElement("form");
+      form.id = "commitmentForm";
+      form.style.display = "none";
+      document.body.appendChild(form);
+    </script>
+  </body>
+</html>
