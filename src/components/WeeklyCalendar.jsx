@@ -218,6 +218,28 @@ function WeeklyCalendar({
           );
         })}
       </div>
+
+      {/* Legend */}
+      <div className="mt-8 p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 tracking-widest">
+          Commitment Legend
+        </p>
+        <div className="flex flex-wrap gap-4 text-xs">
+          {commitmentTemplates.length === 0 ? (
+            <span className="text-slate-400 italic">No templates created yet</span>
+          ) : (
+            commitmentTemplates.map(template => (
+              <div key={template.id} className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-sm"
+                  style={{ backgroundColor: template.color }}
+                ></div>
+                <span className="font-bold text-slate-700 dark:text-slate-300">{template.name}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
