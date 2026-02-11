@@ -10,6 +10,7 @@ import WeekNavigator from "./components/WeekNavigator";
 import TrainingView from "./components/TrainingView";
 import ContentView from "./components/ContentView";
 import StatsView from "./components/StatsView";
+import DayView from "./components/DayView";
 
 function App() {
   // Theme state
@@ -47,6 +48,11 @@ function App() {
   const [showStorageManager, setShowStorageManager] = useState(false);
   const [draggedTemplate, setDraggedTemplate] = useState(null);
   const [currentView, setCurrentView] = useState("timetable"); // 'timetable', 'training', 'content', 'stats'
+
+  // Day View specific state
+  const [selectedDayIdx, setSelectedDayIdx] = useState(null);
+  const [dayNotes, setDayNotes] = useState({});
+  const [dayMarked, setDayMarked] = useState({});
 
   const COLORS = [
     "#ef4444",
@@ -94,7 +100,8 @@ function App() {
     const weekKey = getWeekKey(currentWeekStart);
     const savedInstances = localStorage.getItem(`week-instances-${weekKey}`);
     const savedDayProps = localStorage.getItem(`week-dayprops-${weekKey}`);
-    const savedCompleted = localStorage.getItem(`week-completed-${weekKey}`);
+    const savedNotes = localStorage.getItem(`week-notes-${weekKey}`);
+    const savedMarked = localStorage.getItem(`week-marked-${weekKey}`);
 
     if (savedInstances) {
       setDayInstances(JSON.parse(savedInstances));
@@ -111,7 +118,34 @@ function App() {
     } else {
       setCompletedInstances({});
     }
+
+    if (savedNotes) {
+      setDayNotes(JSON.parse(savedNotes));
+    } else {
+      setDayNotes({});
+    }
+
+    if (savedMarked) {
+      setDayMarked(JSON.parse(savedMarked));
+    } else {
+      setDayMarked({});
+    }
   };
+
+  const saveDayNote = (dayIdx, note) => {
+    const weekKey = getWeekKey(currentWeekStart);
+    const newNotes = { ...dayNotes, [dayIdx]: note };
+    setDayNotes(newNotes);
+    localStorage.setItem(`week-notes-${weekKey}`, JSON.stringify(newNotes));
+  };
+
+  const toggleDayStatus = (dayIdx) => {
+    const weekKey = getWeekKey(currentWeekStart);
+    const newMarked = { ...dayMarked, [dayIdx]: !dayMarked[dayIdx] };
+    setDayMarked(newMarked);
+    localStorage.setItem(`week-marked-${weekKey}`, JSON.stringify(newMarked));
+  };
+
 
   // Save templates to localStorage
   useEffect(() => {
@@ -484,8 +518,8 @@ function App() {
             <button
               onClick={() => setCurrentView("training")}
               className={`px-4 py-2 rounded border transition ${currentView === "training"
-                  ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-dumbbell mr-2"></i>Training
@@ -493,8 +527,8 @@ function App() {
             <button
               onClick={() => setCurrentView("content")}
               className={`px-4 py-2 rounded border transition ${currentView === "content"
-                  ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-video mr-2"></i>Content
@@ -502,8 +536,8 @@ function App() {
             <button
               onClick={() => setCurrentView("stats")}
               className={`px-4 py-2 rounded border transition ${currentView === "stats"
-                  ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-chart-line mr-2"></i>Stats
@@ -541,6 +575,7 @@ function App() {
                 }}
                 onDropZone={addInstanceViaDropZone}
                 draggedTemplate={draggedTemplate}
+                onOpenDayView={(dayIdx) => setSelectedDayIdx(dayIdx)}
               />
 
               {/* Dashboard */}
@@ -623,6 +658,32 @@ function App() {
         onLoad={handleLoadScheduleData}
         scheduleData={currentScheduleData}
       />
+
+      {/* Day View Modal */}
+      {selectedDayIdx !== null && (
+        <DayView
+          dayIdx={selectedDayIdx}
+          dayName={["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][selectedDayIdx]}
+          instances={dayInstances[selectedDayIdx] || []}
+          dayNote={dayNotes[selectedDayIdx] || ""}
+          isDayMarked={!!dayMarked[selectedDayIdx]}
+          onClose={() => setSelectedDayIdx(null)}
+          onToggleCompletion={toggleCompletion}
+          onRemoveInstance={removeInstanceFromDay}
+          onUpdateInstanceTiming={(dayIdx, instanceId, start, end) => {
+            setSelectedDayIdx(null); // Close DayView to show timing modal
+            setTimingUpdateContext({
+              dayIdx,
+              instanceId,
+              currentStart: start,
+              currentEnd: end,
+            });
+            setShowTimingUpdateModal(true);
+          }}
+          onAddNote={saveDayNote}
+          onToggleDayStatus={() => toggleDayStatus(selectedDayIdx)}
+        />
+      )}
     </div>
   );
 }

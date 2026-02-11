@@ -12,16 +12,16 @@
 }
 
 body {
-  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-  color: #1e1b4b;
+  background: #ffffff;
+  color: #1e293b;
   font-family: "Inter", sans-serif;
   overflow-x: hidden;
 }
 
 /* Dark mode overrides */
 html.dark body {
-  background: linear-gradient(135deg, #0c0a1f 0%, #1e1b3a 100%);
-  color: #fef3c7;
+  background: #020617;
+  color: #f8fafc;
 }
 
 .glass-card {
@@ -57,15 +57,15 @@ html.dark .btn-primary {
 }
 
 .modal-content {
-  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-  @apply p-8 rounded-2xl border border-purple-200/50 max-w-md w-11/12 max-h-screen overflow-y-auto shadow-2xl;
-  color: #1e1b4b;
+  background: #ffffff;
+  @apply p-8 rounded-2xl border border-slate-200 max-w-md w-11/12 max-h-screen overflow-y-auto shadow-2xl;
+  color: #1e293b;
 }
 
 html.dark .modal-content {
-  background: linear-gradient(135deg, #1e1b3a 0%, #0c0a1f 100%);
-  @apply border-amber-500/20;
-  color: #fef3c7;
+  background: #0f172a;
+  @apply border-slate-700;
+  color: #f8fafc;
 }
 
 .form-group {
@@ -155,11 +155,11 @@ html.dark .day-selector label:hover {
 }
 
 .calendar-day {
-  @apply bg-slate-200/30 border border-slate-300/30 rounded-xl p-3 min-h-96 overflow-y-auto;
+  @apply bg-blue-50/50 border border-blue-100 rounded-xl p-3 min-h-[500px] overflow-y-auto transition-colors duration-300;
 }
 
 html.dark .calendar-day {
-  @apply bg-slate-800/30 border-white/10;
+  @apply bg-slate-900/40 border-slate-800;
 }
 
 .commitment-block {

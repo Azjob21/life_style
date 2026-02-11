@@ -63,56 +63,24 @@ function WeeklyCalendar({
       <div className="grid grid-cols-7 gap-3">
         {DAYS_SHORT.map((day, dayIdx) => {
           const instances = dayInstances[dayIdx] || [];
-          const props = dayProperties[dayIdx] || {
-            availableTimeStart: "08:00",
-            availableTimeEnd: "22:00",
-          };
 
           return (
             <div
               key={dayIdx}
-              className={`calendar-day flex flex-col transition-all ${dragOverDay === dayIdx ? "ring-2 ring-green-400 scale-105" : ""
+              className={`calendar-day flex flex-col transition-all cursor-pointer hover:shadow-lg ${dragOverDay === dayIdx ? "ring-2 ring-blue-400 scale-105" : ""
                 }`}
+              onClick={() => onOpenDayView?.(dayIdx)}
               onDragOver={handleDragOver}
               onDragLeave={() => setDragOverDay(null)}
               onDrop={() => handleDrop(dayIdx)}
               onDragEnter={() => setDragOverDay(dayIdx)}
             >
               {/* Day Header */}
-              <div className="mb-3">
-                <p className="font-bold text-sm mb-2 text-green-400">{day}</p>
-                <div className="text-xs text-slate-400 space-y-1">
-                  <div>
-                    <label className="text-slate-500">From:</label>
-                    <input
-                      type="time"
-                      value={props.availableTimeStart}
-                      onChange={(e) =>
-                        onUpdateDayProperty(
-                          dayIdx,
-                          "availableTimeStart",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full form-input text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-500">To:</label>
-                    <input
-                      type="time"
-                      value={props.availableTimeEnd}
-                      onChange={(e) =>
-                        onUpdateDayProperty(
-                          dayIdx,
-                          "availableTimeEnd",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full form-input text-xs"
-                    />
-                  </div>
-                </div>
+              <div className="mb-3 text-center border-b border-slate-200 dark:border-slate-800 pb-2">
+                <p className="font-black text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400">{day}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                  {instances.length} Blocks
+                </p>
               </div>
 
               {/* Drop zone & commitments */}

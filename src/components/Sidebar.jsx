@@ -58,14 +58,14 @@ function Sidebar({
   );
 
   return (
-    <div className="w-80 bg-slate-900/50 dark:bg-slate-100/50 backdrop-blur border-r border-white/10 dark:border-slate-300/10 p-6 overflow-y-auto">
+    <div className="w-80 bg-white dark:bg-[#0f172a] backdrop-blur border-r border-slate-200 dark:border-slate-800 p-6 overflow-y-auto">
       {/* Logo */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-purple-500 dark:text-amber-500 mb-2">
+        <h1 className="text-3xl font-black text-blue-600 dark:text-blue-400 mb-2">
           <i className="fa-solid fa-circle-check mr-2"></i>Schedule
         </h1>
-        <p className="text-xs text-slate-400 dark:text-amber-200/60">
-          Building Block Scheduler
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          SYSTEMATIC PRODUCTIVITY
         </p>
       </div>
 
