@@ -85,8 +85,8 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
 
   return (
     <section className="glass-card p-6">
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-100 dark:text-amber-100">
-        <i className="fa-solid fa-chart-bar text-purple-500 dark:text-amber-500"></i>
+      <h3 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-900 dark:text-white mt-4 uppercase tracking-tighter">
+        <i className="fa-solid fa-chart-bar text-blue-600 dark:text-blue-400"></i>
         Week Overview
       </h3>
 
@@ -103,9 +103,9 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {/* Completion Rate */}
-            <div className="p-4 bg-slate-700/30 dark:bg-amber-900/10 rounded-lg border border-purple-500/10 dark:border-amber-500/10">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-400 dark:text-amber-200/60 uppercase font-bold">Completion</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Completion</span>
                 <span className={`text-2xl font-bold ${completionRate >= 80 ? 'text-green-500' : completionRate >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
                   {completionRate}%
                 </span>
@@ -116,15 +116,15 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                   style={{ width: `${completionRate}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 text-right">
+              <p className="text-xs text-slate-700 dark:text-slate-500 mt-2 text-right font-bold">
                 {stats.completedInstances} / {stats.totalInstances} tasks
               </p>
             </div>
 
             {/* Time Stats */}
-            <div className="p-4 bg-slate-700/30 dark:bg-amber-900/10 rounded-lg border border-purple-500/10 dark:border-amber-500/10">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-400 dark:text-amber-200/60 uppercase font-bold">Time Tracked</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Time Tracked</span>
                 <span className="text-2xl font-bold text-blue-400">
                   {stats.time.completedHours}h
                 </span>
@@ -135,33 +135,33 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                   style={{ width: `${stats.time.percentage}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 text-right">
+              <p className="text-xs text-slate-700 dark:text-slate-500 mt-2 text-right font-bold">
                 of {stats.time.totalHours}h committed
               </p>
             </div>
 
             {/* Template Stats */}
-            <div className="p-4 bg-slate-700/30 dark:bg-amber-900/10 rounded-lg border border-purple-500/10 dark:border-amber-500/10">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-400 dark:text-amber-200/60 uppercase font-bold">Total Templates</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Total Templates</span>
                 <span className="text-2xl font-bold text-purple-400">
                   {commitmentTemplates.length}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-auto pt-4 text-right">
+              <p className="text-xs text-slate-700 dark:text-slate-500 mt-auto pt-4 text-right font-bold">
                 Blocks in library
               </p>
             </div>
 
             {/* Utilization */}
-            <div className="p-4 bg-slate-700/30 dark:bg-amber-900/10 rounded-lg border border-purple-500/10 dark:border-amber-500/10">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-400 dark:text-amber-200/60 uppercase font-bold">Active Templates</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Active Templates</span>
                 <span className="text-2xl font-bold text-indigo-400">
                   {Object.keys(stats.instancesByTemplate).length}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-auto pt-4 text-right">
+              <p className="text-xs text-slate-700 dark:text-slate-500 mt-auto pt-4 text-right font-bold">
                 Used this week
               </p>
             </div>
@@ -171,7 +171,7 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {/* Daily Chart */}
             <div className="md:col-span-2 p-6 bg-slate-700/30 dark:bg-amber-900/10 rounded-xl border border-purple-500/10 dark:border-amber-500/10">
-              <h4 className="text-sm font-bold text-slate-400 dark:text-amber-200/60 uppercase mb-4">Daily Performance</h4>
+              <h4 className="text-sm font-black text-slate-900 dark:text-amber-200/60 uppercase mb-4 tracking-tighter">Daily Performance</h4>
               <div className="flex items-end justify-between h-32 gap-2">
                 {DAYS.map((day, idx) => {
                   const dayInsts = dayInstances[idx] || [];
@@ -191,7 +191,7 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                           {completed}/{total} ({percent}%)
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400 font-bold">{day}</span>
+                      <span className="text-xs text-slate-900 dark:text-slate-400 font-black">{day}</span>
                     </div>
                   );
                 })}
@@ -222,7 +222,7 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                 })()}
               </div>
               <div className="text-sm font-bold text-orange-400 uppercase tracking-widest">Day Streak</div>
-              <p className="text-xs text-slate-400 mt-2">Consistency is key!</p>
+              <p className="text-xs text-slate-700 dark:text-slate-400 mt-2 font-bold">Consistency is key!</p>
             </div>
           </div>
 
@@ -280,7 +280,7 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-400 dark:text-slate-600 mb-3">
+                  <p className="text-xs text-slate-900 dark:text-slate-600 mb-3 font-medium">
                     {template.description || "No description"}
                   </p>
 

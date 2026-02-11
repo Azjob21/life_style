@@ -47,14 +47,14 @@ function TrainingView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
             {/* Gym Program */}
             <section className="glass-card p-6">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-100 dark:text-slate-100">
+                <h2 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
                     <i className="fa-solid fa-dumbbell text-red-500"></i>GYM PROGRAM (3
                     Days/Week)
                 </h2>
                 <div className="space-y-6">
-                    <div className="bg-slate-700/30 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-red-500">
-                        <h3 className="font-bold text-red-400 mb-2">PUSH (Day 1)</h3>
-                        <ul className="text-sm space-y-1 text-slate-300 dark:text-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-red-500 border border-slate-200 dark:border-transparent">
+                        <h3 className="font-bold text-red-600 dark:text-red-400 mb-2">PUSH (Day 1)</h3>
+                        <ul className="text-sm space-y-1 text-slate-600 dark:text-slate-300 font-medium">
                             <li>• Bench Press / Push-ups → 3×8–12</li>
                             <li>• Shoulder Press → 3×8–10</li>
                             <li>• Lateral Raises → 3×12</li>
@@ -63,9 +63,9 @@ function TrainingView() {
                         </ul>
                     </div>
 
-                    <div className="bg-slate-700/30 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-blue-500">
-                        <h3 className="font-bold text-blue-400 mb-2">PULL (Day 2)</h3>
-                        <ul className="text-sm space-y-1 text-slate-300 dark:text-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-blue-500 border border-slate-200 dark:border-transparent">
+                        <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-2">PULL (Day 2)</h3>
+                        <ul className="text-sm space-y-1 text-slate-600 dark:text-slate-300 font-medium">
                             <li>• Lat Pulldown / Pull-ups → 3×8–10</li>
                             <li>• Seated Row → 3×10</li>
                             <li>• Face Pull → 3×12</li>
@@ -74,9 +74,9 @@ function TrainingView() {
                         </ul>
                     </div>
 
-                    <div className="bg-slate-700/30 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-green-500">
-                        <h3 className="font-bold text-green-400 mb-2">LEGS + CORE (Day 3)</h3>
-                        <ul className="text-sm space-y-1 text-slate-300 dark:text-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-green-500 border border-slate-200 dark:border-transparent">
+                        <h3 className="font-bold text-green-600 dark:text-green-400 mb-2">LEGS + CORE (Day 3)</h3>
+                        <ul className="text-sm space-y-1 text-slate-600 dark:text-slate-300 font-medium">
                             <li>• Squats / Leg Press → 3×10</li>
                             <li>• Romanian Deadlift → 3×8</li>
                             <li>• Lunges → 3×10/leg</li>
@@ -90,13 +90,13 @@ function TrainingView() {
             <div className="space-y-6">
                 {/* Calisthenics Program */}
                 <section className="glass-card p-6">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-100 dark:text-slate-100">
-                        <i className="fa-solid fa-person text-orange-500"></i>CALISTHENICS
+                    <h2 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
+                        <i className="fa-solid fa-person text-blue-500"></i>CALISTHENICS
                         (1-2 Days/Week)
                     </h2>
-                    <div className="bg-slate-700/30 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-orange-500">
-                        <h3 className="font-bold text-orange-400 mb-2">Full Body Flow</h3>
-                        <ul className="text-sm space-y-1 text-slate-300 dark:text-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-orange-500 border border-slate-200 dark:border-transparent">
+                        <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-2">Full Body Flow</h3>
+                        <ul className="text-sm space-y-1 text-slate-600 dark:text-slate-300 font-medium">
                             <li>• Push-ups (Variations) → 3×Failure</li>
                             <li>• Pull-ups / Chin-ups → 3×Failure</li>
                             <li>• Dips → 3×10-15</li>
@@ -109,8 +109,8 @@ function TrainingView() {
 
                 {/* Workout Logger */}
                 <section className="glass-card p-6">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-100 dark:text-slate-100">
-                        <i className="fa-solid fa-plus-circle text-green-500"></i>Log Today's
+                    <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
+                        <i className="fa-solid fa-plus-circle text-green-600"></i>Log Today's
                         Workout
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -123,7 +123,7 @@ function TrainingView() {
                                 value={exerciseName}
                                 onChange={(e) => setExerciseName(e.target.value)}
                                 placeholder="e.g., Bench Press"
-                                className="w-full bg-slate-800 dark:bg-slate-900 rounded px-3 py-2 text-sm text-white border border-slate-700 focus:border-blue-500 outline-none"
+                                className="w-full bg-slate-50 dark:bg-slate-900 rounded px-3 py-2 text-sm text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:border-blue-500 outline-none"
                             />
                         </div>
                         <div>
@@ -135,7 +135,7 @@ function TrainingView() {
                                 value={setsReps}
                                 onChange={(e) => setSetsReps(e.target.value)}
                                 placeholder="e.g., 3x8"
-                                className="w-full bg-slate-800 dark:bg-slate-900 rounded px-3 py-2 text-sm text-white border border-slate-700 focus:border-blue-500 outline-none"
+                                className="w-full bg-slate-50 dark:bg-slate-900 rounded px-3 py-2 text-sm text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 focus:border-blue-500 outline-none"
                             />
                         </div>
                         <div className="flex items-end">
@@ -150,16 +150,16 @@ function TrainingView() {
                     </div>
 
                     <div className="mt-4">
-                        <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase">Today's Logs</h3>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-slate-400 mb-2 uppercase tracking-tighter">Today's Logs</h3>
                         {getTodayLogs().length === 0 ? (
                             <p className="text-sm text-slate-500 italic">No workouts logged today</p>
                         ) : (
                             <div className="space-y-2">
                                 {getTodayLogs().map((log) => (
-                                    <div key={log.id} className="flex justify-between items-center bg-slate-700/30 dark:bg-slate-800/30 p-2 rounded border border-slate-700">
+                                    <div key={log.id} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2 rounded border border-slate-200 dark:border-slate-700">
                                         <div>
-                                            <span className="font-bold text-slate-200">{log.exercise}</span>
-                                            <span className="text-slate-400 text-sm ml-2">({log.setsReps})</span>
+                                            <span className="font-bold text-slate-900 dark:text-slate-200">{log.exercise}</span>
+                                            <span className="text-slate-600 dark:text-slate-400 text-sm ml-2">({log.setsReps})</span>
                                         </div>
                                         <button
                                             onClick={() => deleteLog(log.id)}

@@ -88,8 +88,8 @@ function ContentView() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
             <div className="lg:col-span-8">
                 <section className="glass-card p-6">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-100 dark:text-slate-100">
-                        <i className="fa-solid fa-video text-green-500"></i>30-Day Content Roadmap
+                    <h2 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white uppercase tracking-tighter">
+                        <i className="fa-solid fa-video text-green-600"></i>30-Day Content Roadmap
                     </h2>
 
                     <div className="space-y-4">
@@ -97,16 +97,16 @@ function ContentView() {
                             <div
                                 key={item.id}
                                 onClick={() => toggleStatus(item.id)}
-                                className={`p-4 rounded-lg border transition cursor-pointer hover:bg-slate-700/50 dark:hover:bg-slate-800/50 flex items-start gap-4 ${item.status === "completed"
-                                        ? "bg-green-900/10 border-green-500/20"
-                                        : "bg-slate-800/30 dark:bg-slate-800/30 border-slate-700"
+                                className={`p-4 rounded-lg border transition cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 flex items-start gap-4 ${item.status === "completed"
+                                    ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-500/20"
+                                    : "bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700"
                                     }`}
                             >
                                 <div className="mt-1">
                                     <span
                                         className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border ${item.status === "completed"
-                                                ? "bg-green-500 text-white border-green-500"
-                                                : "bg-slate-700 text-slate-400 border-slate-600"
+                                            ? "bg-green-500 text-white border-green-500"
+                                            : "bg-slate-700 text-slate-400 border-slate-600"
                                             }`}
                                     >
                                         W{item.week}
@@ -115,8 +115,8 @@ function ContentView() {
                                 <div className="flex-1">
                                     <h3
                                         className={`font-bold text-lg mb-1 ${item.status === "completed"
-                                                ? "text-slate-300 line-through decoration-slate-500"
-                                                : "text-slate-100"
+                                            ? "text-slate-400 line-through decoration-slate-400"
+                                            : "text-slate-900 dark:text-white"
                                             }`}
                                     >
                                         {item.title}
@@ -144,12 +144,12 @@ function ContentView() {
 
             <div className="lg:col-span-4">
                 <section className="glass-card p-6 sticky top-6">
-                    <h3 className="text-lg font-bold mb-4 text-slate-100 dark:text-slate-100">Content Strategy</h3>
+                    <h3 className="text-lg font-black mb-4 text-slate-900 dark:text-white uppercase tracking-tighter">Content Strategy</h3>
                     <div className="space-y-4 text-sm text-slate-300 dark:text-slate-300">
-                        <div className="flex gap-4 p-3 bg-slate-700/30 dark:bg-slate-800/30 rounded-lg">
+                        <div className="flex gap-4 p-3 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-transparent rounded-lg">
                             <div className="text-2xl">📊</div>
                             <div>
-                                <p className="font-bold text-slate-100 dark:text-slate-100">1 Video / Week</p>
+                                <p className="font-bold text-slate-900 dark:text-slate-100">1 Video / Week</p>
                                 <p className="text-slate-400 text-xs mt-1">
                                     3-6 minutes, screen + voice only. Keep it simple.
                                 </p>

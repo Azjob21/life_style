@@ -12,6 +12,7 @@ function WeeklyCalendar({
   onUpdateInstanceTiming,
   onDropZone,
   draggedTemplate,
+  onOpenDayView,
 }) {
   const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const [dragOverDay, setDragOverDay] = useState(null);
@@ -78,7 +79,7 @@ function WeeklyCalendar({
               {/* Day Header */}
               <div className="mb-3 text-center border-b border-slate-200 dark:border-slate-800 pb-2">
                 <p className="font-black text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400">{day}</p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-bold">
                   {instances.length} Blocks
                 </p>
               </div>
@@ -86,7 +87,7 @@ function WeeklyCalendar({
               {/* Drop zone & commitments */}
               <div className="flex-1 min-h-64 bg-slate-700/20 rounded-lg p-2 space-y-1 border border-dashed border-slate-600/30">
                 {instances.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic text-center py-4">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 italic text-center py-4">
                     Drop or click to add
                   </p>
                 ) : (
@@ -123,7 +124,7 @@ function WeeklyCalendar({
                             >
                               {template.name}
                             </div>
-                            <div className="text-slate-400 dark:text-slate-500 text-xs opacity-75">
+                            <div className="text-slate-600 dark:text-slate-400 text-xs font-medium opacity-90">
                               {instance.startTime} - {instance.endTime}
                             </div>
                           </div>
@@ -189,7 +190,7 @@ function WeeklyCalendar({
 
       {/* Legend */}
       <div className="mt-8 p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 tracking-widest">
+        <p className="text-xs font-black text-slate-900 dark:text-slate-400 uppercase mb-3 tracking-widest">
           Commitment Legend
         </p>
         <div className="flex flex-wrap gap-4 text-xs">
@@ -202,7 +203,7 @@ function WeeklyCalendar({
                   className="w-3 h-3 rounded-sm"
                   style={{ backgroundColor: template.color }}
                 ></div>
-                <span className="font-bold text-slate-700 dark:text-slate-300">{template.name}</span>
+                <span className="font-black text-slate-900 dark:text-slate-300">{template.name}</span>
               </div>
             ))
           )}

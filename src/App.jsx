@@ -90,44 +90,54 @@ function App() {
   };
 
   const loadData = () => {
-    // Load templates (global)
-    const savedTemplates = localStorage.getItem("commitment-templates");
-    if (savedTemplates) {
-      setCommitmentTemplates(JSON.parse(savedTemplates));
-    }
+    try {
+      // Load templates (global)
+      const savedTemplates = localStorage.getItem("commitment-templates");
+      if (savedTemplates) {
+        setCommitmentTemplates(JSON.parse(savedTemplates));
+      }
 
-    // Load week data
-    const weekKey = getWeekKey(currentWeekStart);
-    const savedInstances = localStorage.getItem(`week-instances-${weekKey}`);
-    const savedDayProps = localStorage.getItem(`week-dayprops-${weekKey}`);
-    const savedNotes = localStorage.getItem(`week-notes-${weekKey}`);
-    const savedMarked = localStorage.getItem(`week-marked-${weekKey}`);
+      // Load week data
+      const weekKey = getWeekKey(currentWeekStart);
+      const savedInstances = localStorage.getItem(`week-instances-${weekKey}`);
+      const savedDayProps = localStorage.getItem(`week-dayprops-${weekKey}`);
+      const savedCompleted = localStorage.getItem(`week-completed-${weekKey}`);
+      const savedNotes = localStorage.getItem(`week-notes-${weekKey}`);
+      const savedMarked = localStorage.getItem(`week-marked-${weekKey}`);
 
-    if (savedInstances) {
-      setDayInstances(JSON.parse(savedInstances));
-    } else {
+      if (savedInstances) {
+        setDayInstances(JSON.parse(savedInstances));
+      } else {
+        setDayInstances({});
+      }
+
+      if (savedDayProps) {
+        setDayProperties(JSON.parse(savedDayProps));
+      }
+
+      if (savedCompleted) {
+        setCompletedInstances(JSON.parse(savedCompleted));
+      } else {
+        setCompletedInstances({});
+      }
+
+      if (savedNotes) {
+        setDayNotes(JSON.parse(savedNotes));
+      } else {
+        setDayNotes({});
+      }
+
+      if (savedMarked) {
+        setDayMarked(JSON.parse(savedMarked));
+      } else {
+        setDayMarked({});
+      }
+    } catch (error) {
+      console.error("Error loading application data:", error);
+      // Fallback to defaults
       setDayInstances({});
-    }
-
-    if (savedDayProps) {
-      setDayProperties(JSON.parse(savedDayProps));
-    }
-
-    if (savedCompleted) {
-      setCompletedInstances(JSON.parse(savedCompleted));
-    } else {
       setCompletedInstances({});
-    }
-
-    if (savedNotes) {
-      setDayNotes(JSON.parse(savedNotes));
-    } else {
       setDayNotes({});
-    }
-
-    if (savedMarked) {
-      setDayMarked(JSON.parse(savedMarked));
-    } else {
       setDayMarked({});
     }
   };
@@ -436,7 +446,7 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className={`flex h-screen transition-colors duration-300 ${isDarkMode ? "dark" : ""}`}>
       <Sidebar
         templates={commitmentTemplates}
         onAddTemplate={openAddTemplateModal}
@@ -449,17 +459,17 @@ function App() {
           {/* Header */}
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h2 className="text-4xl font-bold mb-2 text-slate-100 dark:text-slate-900">
+              <h2 className="text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tighter uppercase">
                 Weekly Schedule
               </h2>
-              <p className="text-slate-400 dark:text-slate-600 text-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                 {weekDateRange}
               </p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="px-4 py-2 rounded bg-slate-700 dark:bg-slate-300 hover:bg-slate-600 dark:hover:bg-slate-200 transition text-sm text-slate-100 dark:text-slate-900"
+                className="px-4 py-2 rounded bg-slate-100 dark:bg-slate-300 hover:bg-slate-200 dark:hover:bg-slate-200 transition text-sm text-slate-900 dark:text-slate-900 border border-slate-200 dark:border-transparent"
                 title={
                   isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
                 }
@@ -497,7 +507,7 @@ function App() {
               </button>
               <button
                 onClick={() => setShowTemplateManager(true)}
-                className="px-4 py-2 rounded bg-slate-700 dark:bg-slate-300 hover:bg-slate-600 dark:hover:bg-slate-200 transition text-sm text-slate-100 dark:text-slate-900"
+                className="px-4 py-2 rounded bg-slate-100 dark:bg-slate-300 hover:bg-slate-200 dark:hover:bg-slate-200 transition text-sm text-slate-900 dark:text-slate-900 border border-slate-200 dark:border-transparent"
               >
                 <i className="fa-solid fa-cogs mr-2"></i>Templates
               </button>
@@ -509,8 +519,8 @@ function App() {
             <button
               onClick={() => setCurrentView("timetable")}
               className={`px-4 py-2 rounded border transition ${currentView === "timetable"
-                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-clock mr-2"></i>Timetable
@@ -518,8 +528,8 @@ function App() {
             <button
               onClick={() => setCurrentView("training")}
               className={`px-4 py-2 rounded border transition ${currentView === "training"
-                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-dumbbell mr-2"></i>Training
@@ -527,8 +537,8 @@ function App() {
             <button
               onClick={() => setCurrentView("content")}
               className={`px-4 py-2 rounded border transition ${currentView === "content"
-                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-video mr-2"></i>Content
@@ -536,8 +546,8 @@ function App() {
             <button
               onClick={() => setCurrentView("stats")}
               className={`px-4 py-2 rounded border transition ${currentView === "stats"
-                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
-                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
             >
               <i className="fa-solid fa-chart-line mr-2"></i>Stats

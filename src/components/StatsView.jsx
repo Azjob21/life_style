@@ -63,8 +63,8 @@ function StatsView({ dayInstances, completedInstances }) {
     const ProgressBar = ({ label, percentage, colorClass }) => (
         <div>
             <div className="flex justify-between mb-2">
-                <span className="text-slate-400 font-bold text-sm">{label}</span>
-                <span className={`font-bold ${colorClass}`}>{percentage}%</span>
+                <span className="text-slate-900 dark:text-slate-400 font-black text-sm uppercase tracking-tighter">{label}</span>
+                <span className={`font-black ${colorClass}`}>{percentage}%</span>
             </div>
             <div className="w-full bg-slate-700 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                 <div
@@ -80,7 +80,7 @@ function StatsView({ dayInstances, completedInstances }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Streak Card - Reused logic for consistency */}
                 <div className="glass-card p-6 border-l-4 border-orange-500">
-                    <div className="text-sm text-slate-400 mb-2 font-bold uppercase tracking-wider">Current Streak</div>
+                    <div className="text-xs text-slate-900 dark:text-slate-400 mb-2 font-black uppercase tracking-widest">Current Streak</div>
                     <div className="text-3xl font-black text-orange-400 flex items-center gap-2">
                         {(() => {
                             let streak = 0;
@@ -99,12 +99,12 @@ function StatsView({ dayInstances, completedInstances }) {
                         <span className="text-lg">days</span>
                         <i className="fa-solid fa-fire text-orange-500 animate-pulse text-xl"></i>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Keep the system alive</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-500 mt-2 font-bold">Keep the system alive</p>
                 </div>
 
                 {/* This Week Completion */}
                 <div className="glass-card p-6 border-l-4 border-blue-500">
-                    <div className="text-sm text-slate-400 mb-2 font-bold uppercase tracking-wider">This Week</div>
+                    <div className="text-xs text-slate-900 dark:text-slate-400 mb-2 font-black uppercase tracking-widest">This Week</div>
                     <div className="text-3xl font-black text-blue-400">
                         {(() => {
                             let completedDays = 0;
@@ -123,12 +123,12 @@ function StatsView({ dayInstances, completedInstances }) {
                             return `${completedDays} / ${activeDays}`;
                         })()}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Days > 50% completed</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-500 mt-2 font-bold">Days &gt; 50% completed</p>
                 </div>
 
                 {/* Gym Sessions */}
                 <div className="glass-card p-6 border-l-4 border-red-500">
-                    <div className="text-sm text-slate-400 mb-2 font-bold uppercase tracking-wider">Gym Sessions</div>
+                    <div className="text-xs text-slate-900 dark:text-slate-400 mb-2 font-black uppercase tracking-widest">Gym Sessions</div>
                     <div className="text-3xl font-black text-red-400">
                         {gymLogs.filter(l => {
                             // Filter logs from this week? For now, total logs or just mock "This Week" via date check
@@ -140,23 +140,23 @@ function StatsView({ dayInstances, completedInstances }) {
                             return diffDays <= 7;
                         }).length}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Logged in last 7 days</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-500 mt-2 font-bold">Logged in last 7 days</p>
                 </div>
 
                 {/* Content Created */}
                 <div className="glass-card p-6 border-l-4 border-purple-500">
-                    <div className="text-sm text-slate-400 mb-2 font-bold uppercase tracking-wider">Content Published</div>
+                    <div className="text-xs text-slate-900 dark:text-slate-400 mb-2 font-black uppercase tracking-widest">Content Published</div>
                     <div className="text-3xl font-black text-purple-400">
                         {contentRoadmap.filter(c => c.status === 'completed').length}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Total videos done</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-500 mt-2 font-bold">Total videos done</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Weekly Completion Chart */}
                 <section className="glass-card p-6">
-                    <h2 className="text-xl font-bold mb-6 text-slate-100 dark:text-slate-100">Weekly Completion</h2>
+                    <h2 className="text-xl font-black mb-6 text-slate-900 dark:text-slate-100 uppercase tracking-tighter">Weekly Completion</h2>
                     <div className="h-64 flex items-end justify-between gap-2">
                         {DAYS.map((day, idx) => {
                             const insts = dayInstances[idx] || [];
@@ -172,8 +172,8 @@ function StatsView({ dayInstances, completedInstances }) {
                                             style={{ height: `${percent}%` }}
                                         ></div>
                                     </div>
-                                    <span className="mt-2 text-xs font-bold text-slate-400">{day}</span>
-                                    <div className="text-xs font-bold text-slate-200 mt-1">{percent}%</div>
+                                    <span className="mt-2 text-xs font-black text-slate-900 dark:text-slate-400">{day}</span>
+                                    <div className="text-xs font-black text-slate-700 dark:text-slate-200 mt-1">{percent}%</div>
                                 </div>
                             );
                         })}
@@ -182,15 +182,15 @@ function StatsView({ dayInstances, completedInstances }) {
 
                 {/* Detailed Metrics */}
                 <section className="glass-card p-6">
-                    <h2 className="text-xl font-bold mb-6 text-slate-100 dark:text-slate-100">Metric Adherence</h2>
+                    <h2 className="text-xl font-black mb-6 text-slate-900 dark:text-white uppercase tracking-tighter">Metric Adherence</h2>
                     <div className="space-y-6">
                         <ProgressBar label="Focus Block Adherence" percentage={metrics.focus} colorClass="text-amber-400" />
                         <ProgressBar label="Quran Consistency" percentage={metrics.quran} colorClass="text-green-400" />
                         <ProgressBar label="Training Completion" percentage={metrics.training} colorClass="text-red-400" />
                     </div>
 
-                    <div className="mt-8 p-4 bg-slate-700/30 dark:bg-slate-800/30 rounded-lg">
-                        <h3 className="font-bold text-slate-200 mb-2">System Health</h3>
+                    <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-transparent rounded-lg">
+                        <h3 className="font-bold text-slate-900 dark:text-slate-200 mb-2">System Health</h3>
                         <div className="flex items-center gap-2 text-green-400 font-bold">
                             <span className="relative flex h-3 w-3">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -198,7 +198,7 @@ function StatsView({ dayInstances, completedInstances }) {
                             </span>
                             OPERATIONAL
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-bold">
                             All systems functional. Continue execution of protocol.
                         </p>
                     </div>
