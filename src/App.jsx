@@ -7,6 +7,9 @@ import TimingUpdateModal from "./components/TimingUpdateModal";
 import TemplateManager from "./components/TemplateManager";
 import StorageManager from "./components/StorageManager";
 import WeekNavigator from "./components/WeekNavigator";
+import TrainingView from "./components/TrainingView";
+import ContentView from "./components/ContentView";
+import StatsView from "./components/StatsView";
 
 function App() {
   // Theme state
@@ -19,6 +22,9 @@ function App() {
 
   // Day instances - mapping of dayIndex -> array of instances
   const [dayInstances, setDayInstances] = useState({});
+
+  // Completion tracking - mapping of dayIndex -> { instanceId: boolean }
+  const [completedInstances, setCompletedInstances] = useState({});
 
   // Day properties (available time per day)
   const [dayProperties, setDayProperties] = useState({
@@ -40,6 +46,7 @@ function App() {
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [showStorageManager, setShowStorageManager] = useState(false);
   const [draggedTemplate, setDraggedTemplate] = useState(null);
+  const [currentView, setCurrentView] = useState("timetable"); // 'timetable', 'training', 'content', 'stats'
 
   const COLORS = [
     "#ef4444",
@@ -87,6 +94,7 @@ function App() {
     const weekKey = getWeekKey(currentWeekStart);
     const savedInstances = localStorage.getItem(`week-instances-${weekKey}`);
     const savedDayProps = localStorage.getItem(`week-dayprops-${weekKey}`);
+    const savedCompleted = localStorage.getItem(`week-completed-${weekKey}`);
 
     if (savedInstances) {
       setDayInstances(JSON.parse(savedInstances));
@@ -96,6 +104,12 @@ function App() {
 
     if (savedDayProps) {
       setDayProperties(JSON.parse(savedDayProps));
+    }
+
+    if (savedCompleted) {
+      setCompletedInstances(JSON.parse(savedCompleted));
+    } else {
+      setCompletedInstances({});
     }
   };
 
@@ -118,7 +132,11 @@ function App() {
       `week-dayprops-${weekKey}`,
       JSON.stringify(dayProperties),
     );
-  }, [dayInstances, dayProperties, currentWeekStart]);
+    localStorage.setItem(
+      `week-completed-${weekKey}`,
+      JSON.stringify(completedInstances),
+    );
+  }, [dayInstances, dayProperties, completedInstances, currentWeekStart]);
 
   const updateWeekDateRange = () => {
     const startOfWeek = new Date(currentWeekStart);
@@ -258,6 +276,21 @@ function App() {
     }));
   };
 
+  const toggleCompletion = (dayIdx, instanceId) => {
+    setCompletedInstances((prev) => {
+      const dayCompleted = prev[dayIdx] || {};
+      const isCompleted = dayCompleted[instanceId];
+
+      return {
+        ...prev,
+        [dayIdx]: {
+          ...dayCompleted,
+          [instanceId]: !isCompleted,
+        },
+      };
+    });
+  };
+
   const addInstanceViaDropZone = (templateId, dayIdx) => {
     const template = commitmentTemplates.find((t) => t.id === templateId);
     if (template) {
@@ -369,7 +402,7 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-50 dark:via-slate-100 dark:to-slate-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Sidebar
         templates={commitmentTemplates}
         onAddTemplate={openAddTemplateModal}
@@ -437,40 +470,102 @@ function App() {
             </div>
           </div>
 
-          {/* Week Navigation */}
-          <WeekNavigator
-            onPrevious={() => changeWeek(-1)}
-            onToday={goToToday}
-            onNext={() => changeWeek(1)}
-          />
+          {/* Navigation Tabs */}
+          <div className="mb-8 flex gap-2 flex-wrap border-b border-slate-700/50 pb-4">
+            <button
+              onClick={() => setCurrentView("timetable")}
+              className={`px-4 py-2 rounded border transition ${currentView === "timetable"
+                ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                }`}
+            >
+              <i className="fa-solid fa-clock mr-2"></i>Timetable
+            </button>
+            <button
+              onClick={() => setCurrentView("training")}
+              className={`px-4 py-2 rounded border transition ${currentView === "training"
+                  ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                  : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                }`}
+            >
+              <i className="fa-solid fa-dumbbell mr-2"></i>Training
+            </button>
+            <button
+              onClick={() => setCurrentView("content")}
+              className={`px-4 py-2 rounded border transition ${currentView === "content"
+                  ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                  : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                }`}
+            >
+              <i className="fa-solid fa-video mr-2"></i>Content
+            </button>
+            <button
+              onClick={() => setCurrentView("stats")}
+              className={`px-4 py-2 rounded border transition ${currentView === "stats"
+                  ? "bg-slate-700 dark:bg-slate-300 border-slate-600 dark:border-slate-400 text-white dark:text-slate-900"
+                  : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50"
+                }`}
+            >
+              <i className="fa-solid fa-chart-line mr-2"></i>Stats
+            </button>
+          </div>
 
-          {/* Weekly Calendar */}
-          <WeeklyCalendar
-            dayInstances={dayInstances}
-            commitmentTemplates={commitmentTemplates}
-            dayProperties={dayProperties}
-            onUpdateDayProperty={updateDayProperty}
-            onAddInstance={addInstanceToDay}
-            onRemoveInstance={removeInstanceFromDay}
-            onUpdateInstanceTiming={(dayIdx, instanceId, start, end) => {
-              setTimingUpdateContext({
-                dayIdx,
-                instanceId,
-                currentStart: start,
-                currentEnd: end,
-              });
-              setShowTimingUpdateModal(true);
-            }}
-            onDropZone={addInstanceViaDropZone}
-            draggedTemplate={draggedTemplate}
-          />
+          {/* VIEW: TIMETABLE */}
+          {currentView === "timetable" && (
+            <>
+              {/* Week Navigation */}
+              <WeekNavigator
+                onPrevious={() => changeWeek(-1)}
+                onToday={goToToday}
+                onNext={() => changeWeek(1)}
+              />
 
-          {/* Dashboard */}
-          <Dashboard
-            dayInstances={dayInstances}
-            commitmentTemplates={commitmentTemplates}
-            onEditTemplate={editTemplate}
-          />
+              {/* Weekly Calendar */}
+              <WeeklyCalendar
+                dayInstances={dayInstances}
+                commitmentTemplates={commitmentTemplates}
+                dayProperties={dayProperties}
+                completedInstances={completedInstances}
+                onUpdateDayProperty={updateDayProperty}
+                onAddInstance={addInstanceToDay}
+                onRemoveInstance={removeInstanceFromDay}
+                onToggleCompletion={toggleCompletion}
+                onUpdateInstanceTiming={(dayIdx, instanceId, start, end) => {
+                  setTimingUpdateContext({
+                    dayIdx,
+                    instanceId,
+                    currentStart: start,
+                    currentEnd: end,
+                  });
+                  setShowTimingUpdateModal(true);
+                }}
+                onDropZone={addInstanceViaDropZone}
+                draggedTemplate={draggedTemplate}
+              />
+
+              {/* Dashboard */}
+              <Dashboard
+                dayInstances={dayInstances}
+                commitmentTemplates={commitmentTemplates}
+                completedInstances={completedInstances}
+                onEditTemplate={editTemplate}
+              />
+            </>
+          )}
+
+          {/* VIEW: TRAINING */}
+          {currentView === "training" && <TrainingView />}
+
+          {/* VIEW: CONTENT */}
+          {currentView === "content" && <ContentView />}
+
+          {/* VIEW: STATS */}
+          {currentView === "stats" && (
+            <StatsView
+              dayInstances={dayInstances}
+              completedInstances={completedInstances}
+            />
+          )}
         </div>
       </div>
 

@@ -4,9 +4,11 @@ function WeeklyCalendar({
   dayInstances,
   commitmentTemplates,
   dayProperties,
+  completedInstances,
   onUpdateDayProperty,
   onAddInstance,
   onRemoveInstance,
+  onToggleCompletion,
   onUpdateInstanceTiming,
   onDropZone,
   draggedTemplate,
@@ -32,8 +34,28 @@ function WeeklyCalendar({
     const startMin = startH * 60 + startM;
     const endMin = endH * 60 + endM;
     const duration = endMin - startMin;
-    const baseHeight = 2; // pixels per minute
-    return Math.max(duration * baseHeight, 40); // minimum height
+    const baseHeight = 0.8; // pixels per minute (reduced to prevent stretching)
+    const calculatedHeight = duration * baseHeight;
+    return Math.min(Math.max(calculatedHeight, 45), 120); // min 45px, max 120px
+  };
+
+  const formatDuration = (startTime, endTime) => {
+    const [startH, startM] = startTime.split(":").map(Number);
+    const [endH, endM] = endTime.split(":").map(Number);
+    const startMin = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+    const durationMin = endMin - startMin;
+
+    const hours = Math.floor(durationMin / 60);
+    const minutes = durationMin % 60;
+
+    if (hours === 0) {
+      return `${minutes}m`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${minutes}m`;
+    }
   };
 
   return (
@@ -49,9 +71,8 @@ function WeeklyCalendar({
           return (
             <div
               key={dayIdx}
-              className={`calendar-day flex flex-col transition-all ${
-                dragOverDay === dayIdx ? "ring-2 ring-green-400 scale-105" : ""
-              }`}
+              className={`calendar-day flex flex-col transition-all ${dragOverDay === dayIdx ? "ring-2 ring-green-400 scale-105" : ""
+                }`}
               onDragOver={handleDragOver}
               onDragLeave={() => setDragOverDay(null)}
               onDrop={() => handleDrop(dayIdx)}
@@ -112,10 +133,12 @@ function WeeklyCalendar({
                       instance.endTime,
                     );
 
+                    const isCompleted = completedInstances[dayIdx]?.[instance.id] || false;
+
                     return (
                       <div
                         key={instance.id}
-                        className="group relative cursor-pointer transition hover:shadow-lg"
+                        className={`group relative cursor-pointer transition hover:shadow-lg ${isCompleted ? 'opacity-60' : ''}`}
                         style={{
                           height: `${height}px`,
                           background: `${template.color}30`,
@@ -127,19 +150,41 @@ function WeeklyCalendar({
                         <div className="p-1 text-xs h-full flex flex-col justify-between">
                           <div>
                             <div
-                              className="font-bold truncate"
+                              className={`font-bold truncate ${isCompleted ? 'line-through' : ''}`}
                               style={{ color: template.color }}
                             >
                               {template.name}
                             </div>
-                            <div className="text-slate-400 text-xs opacity-75">
+                            <div className="text-slate-400 dark:text-slate-500 text-xs opacity-75">
                               {instance.startTime} - {instance.endTime}
                             </div>
+                          </div>
+
+                          {/* Duration Badge */}
+                          <div
+                            className="text-xs font-bold mt-1 px-1.5 py-0.5 rounded inline-block self-start"
+                            style={{
+                              background: `${template.color}40`,
+                              color: template.color,
+                              fontSize: '10px'
+                            }}
+                          >
+                            ⏱ {formatDuration(instance.startTime, instance.endTime)}
                           </div>
                         </div>
 
                         {/* Hover actions */}
                         <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition space-y-1 p-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleCompletion(dayIdx, instance.id);
+                            }}
+                            className={`w-6 h-6 rounded ${isCompleted ? 'bg-green-500' : 'bg-slate-700 dark:bg-slate-300'} hover:bg-green-600 flex items-center justify-center text-white text-xs`}
+                            title={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+                          >
+                            {isCompleted ? '✓' : '○'}
+                          </button>
                           <button
                             onClick={() =>
                               onUpdateInstanceTiming(

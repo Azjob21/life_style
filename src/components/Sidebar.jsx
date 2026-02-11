@@ -61,10 +61,10 @@ function Sidebar({
     <div className="w-80 bg-slate-900/50 dark:bg-slate-100/50 backdrop-blur border-r border-white/10 dark:border-slate-300/10 p-6 overflow-y-auto">
       {/* Logo */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-green-400 dark:text-green-600 mb-2">
+        <h1 className="text-3xl font-black text-purple-500 dark:text-amber-500 mb-2">
           <i className="fa-solid fa-circle-check mr-2"></i>Schedule
         </h1>
-        <p className="text-xs text-slate-400 dark:text-slate-600">
+        <p className="text-xs text-slate-400 dark:text-amber-200/60">
           Building Block Scheduler
         </p>
       </div>
@@ -81,10 +81,10 @@ function Sidebar({
         </h3>
         <div className="glass-card p-4 space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-slate-400 dark:text-slate-600">
+            <span className="text-xs text-slate-400 dark:text-amber-200/60">
               Total:
             </span>
-            <span className="text-xl font-bold text-green-400 dark:text-green-600">
+            <span className="text-xl font-bold text-purple-500 dark:text-amber-500">
               {templates.length}
             </span>
           </div>

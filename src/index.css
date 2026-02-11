@@ -12,36 +12,40 @@
 }
 
 body {
-  background: linear-gradient(135deg, #0f172a 0%, #1a2a47 100%);
-  color: #f8fafc;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  color: #1e1b4b;
   font-family: "Inter", sans-serif;
   overflow-x: hidden;
 }
 
-/* Light mode overrides */
+/* Dark mode overrides */
 html.dark body {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  color: #1e293b;
+  background: linear-gradient(135deg, #0c0a1f 0%, #1e1b3a 100%);
+  color: #fef3c7;
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(196, 181, 253, 0.3);
   border-radius: 12px;
 }
 
 html.dark .glass-card {
-  background: rgba(241, 245, 250, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(30, 27, 58, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
 .btn-primary {
-  @apply bg-gradient-to-r from-green-500 to-green-600 text-white border-none px-4 py-2 rounded-lg font-bold cursor-pointer transition-all duration-300;
+  @apply bg-gradient-to-r from-purple-500 to-purple-600 text-white border-none px-4 py-2 rounded-lg font-bold cursor-pointer transition-all duration-300;
 }
 
 .btn-primary:hover {
-  @apply -translate-y-0.5 shadow-lg shadow-green-500/30;
+  @apply -translate-y-0.5 shadow-lg shadow-purple-500/30;
+}
+
+html.dark .btn-primary {
+  @apply bg-gradient-to-r from-amber-500 to-amber-600;
 }
 
 .modal {
@@ -53,14 +57,15 @@ html.dark .glass-card {
 }
 
 .modal-content {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  @apply p-8 rounded-2xl border border-white/10 max-w-md w-11/12 max-h-screen overflow-y-auto shadow-2xl;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  @apply p-8 rounded-2xl border border-purple-200/50 max-w-md w-11/12 max-h-screen overflow-y-auto shadow-2xl;
+  color: #1e1b4b;
 }
 
 html.dark .modal-content {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  @apply border-black/10;
-  color: #1e293b;
+  background: linear-gradient(135deg, #1e1b3a 0%, #0c0a1f 100%);
+  @apply border-amber-500/20;
+  color: #fef3c7;
 }
 
 .form-group {
@@ -68,35 +73,35 @@ html.dark .modal-content {
 }
 
 .form-group label {
-  @apply block text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest;
+  @apply block text-xs font-bold uppercase text-slate-600 mb-2 tracking-widest;
 }
 
 html.dark .form-group label {
-  @apply text-slate-600;
+  @apply text-slate-400;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  @apply w-full px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white text-sm transition-all duration-200;
+  @apply w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-200 text-slate-900 text-sm transition-all duration-200;
 }
 
 html.dark .form-group input,
 html.dark .form-group select,
 html.dark .form-group textarea {
-  @apply bg-slate-200 text-slate-900 border-slate-300;
+  @apply bg-white/5 text-white border-white/10;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  @apply outline-none border-green-500 bg-white/10 ring-2 ring-green-500/20;
+  @apply outline-none border-green-600 bg-slate-100 ring-2 ring-green-600/20;
 }
 
 html.dark .form-group input:focus,
 html.dark .form-group select:focus,
 html.dark .form-group textarea:focus {
-  @apply bg-slate-100 border-green-600 ring-green-600/20;
+  @apply bg-white/10 border-green-500 ring-green-500/20;
 }
 
 .color-picker {
@@ -109,12 +114,12 @@ html.dark .form-group textarea:focus {
 
 .color-option:hover,
 .color-option.selected {
-  @apply border-white scale-110;
+  @apply border-slate-900 scale-110;
 }
 
 html.dark .color-option:hover,
 html.dark .color-option.selected {
-  @apply border-slate-900;
+  @apply border-white;
 }
 
 .day-selector {
@@ -122,19 +127,19 @@ html.dark .color-option.selected {
 }
 
 .day-selector label {
-  @apply flex items-center gap-1.5 cursor-pointer p-2 rounded-lg bg-white/5 transition-all duration-200;
+  @apply flex items-center gap-1.5 cursor-pointer p-2 rounded-lg bg-slate-300/30 transition-all duration-200;
 }
 
 html.dark .day-selector label {
-  @apply bg-slate-300/30;
+  @apply bg-white/5;
 }
 
 .day-selector label:hover {
-  @apply bg-green-500/10;
+  @apply bg-green-600/10;
 }
 
 html.dark .day-selector label:hover {
-  @apply bg-green-600/10;
+  @apply bg-green-500/10;
 }
 
 .day-selector input {
@@ -150,11 +155,11 @@ html.dark .day-selector label:hover {
 }
 
 .calendar-day {
-  @apply bg-slate-800/30 border border-white/10 rounded-xl p-3 min-h-96 overflow-y-auto;
+  @apply bg-slate-200/30 border border-slate-300/30 rounded-xl p-3 min-h-96 overflow-y-auto;
 }
 
 html.dark .calendar-day {
-  @apply bg-slate-200/30 border-slate-300/30;
+  @apply bg-slate-800/30 border-white/10;
 }
 
 .commitment-block {
@@ -166,19 +171,19 @@ html.dark .calendar-day {
 }
 
 .stat-card {
-  @apply bg-slate-800/30 border border-white/10 rounded-xl p-4;
+  @apply bg-slate-200/30 border border-slate-300/30 rounded-xl p-4;
 }
 
 html.dark .stat-card {
-  @apply bg-slate-200/30 border-slate-300/30;
+  @apply bg-slate-800/30 border-white/10;
 }
 
 .empty-state {
-  @apply flex flex-col items-center justify-center p-10 text-center text-slate-400;
+  @apply flex flex-col items-center justify-center p-10 text-center text-slate-600;
 }
 
 html.dark .empty-state {
-  @apply text-slate-600;
+  @apply text-slate-400;
 }
 
 .empty-state i {
@@ -186,26 +191,26 @@ html.dark .empty-state {
 }
 
 .form-input {
-  @apply px-3 py-2 border border-white/10 rounded-lg bg-white/5 text-white text-sm transition-all duration-200;
+  @apply px-3 py-2 border border-slate-300 rounded-lg bg-slate-200 text-slate-900 text-sm transition-all duration-200;
 }
 
 html.dark .form-input {
-  @apply bg-slate-200 text-slate-900 border-slate-300;
+  @apply bg-white/5 text-white border-white/10;
 }
 
 .form-input:focus {
-  @apply outline-none border-green-500 bg-white/10 ring-2 ring-green-500/20;
+  @apply outline-none border-green-600 bg-slate-100 ring-2 ring-green-600/20;
 }
 
 html.dark .form-input:focus {
-  @apply bg-slate-100 border-green-600 ring-green-600/20;
+  @apply bg-white/10 border-green-500 ring-green-500/20;
 }
 
 /* Drag and drop states */
 .calendar-day.drag-over {
-  @apply ring-2 ring-green-400 scale-105;
+  @apply ring-2 ring-green-600 scale-105;
 }
 
 html.dark .calendar-day.drag-over {
-  @apply ring-green-600;
+  @apply ring-green-400;
 }
