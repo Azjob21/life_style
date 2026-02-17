@@ -88,7 +88,12 @@ const EXERCISE_PRESETS = {
   Cardio: ["Running", "Cycling", "Jump Rope", "Rowing", "Stair Climber"],
 };
 
-function TrainingView({ commitmentTemplates, onCreateCommitment }) {
+function TrainingView({
+  commitmentTemplates,
+  onCreateCommitment,
+  dayInstances,
+  completedInstances,
+}) {
   // ─── State ───
   const [programs, setPrograms] = useState([]);
   const [showProgramBuilder, setShowProgramBuilder] = useState(false);
@@ -801,6 +806,132 @@ function TrainingView({ commitmentTemplates, onCreateCommitment }) {
       programs.find((p) => p.id === selectedProgram.id) || selectedProgram;
     const logs = physicalLogs[prog.id] || [];
 
+    // ─── Compute program statistics ───
+    const programTemplateIds = prog.days.map(
+      (_, idx) => `training-${prog.id}-day-${idx}`,
+    );
+
+    // Scan all weeks in localStorage to gather historical data
+    const allWeekStats = (() => {
+      const stats = {
+        totalScheduled: 0,
+        totalCompleted: 0,
+        weeksSeen: new Set(),
+        firstSeen: null,
+        lastSeen: null,
+        dayBreakdown: {}, // templateId -> { scheduled, completed }
+        weeklyHistory: [], // [{weekKey, scheduled, completed}]
+      };
+
+      // Initialize day breakdown
+      prog.days.forEach((day, idx) => {
+        const tid = `training-${prog.id}-day-${idx}`;
+        stats.dayBreakdown[tid] = {
+          label: day.label,
+          scheduled: 0,
+          completed: 0,
+          muscleGroups: day.muscleGroups || [],
+        };
+      });
+
+      // Scan localStorage for all week-instances-* keys
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith("week-instances-")) continue;
+        const weekKey = key.replace("week-instances-", "");
+        let weekInstances = {};
+        let weekCompleted = {};
+        try {
+          weekInstances = JSON.parse(localStorage.getItem(key) || "{}");
+          weekCompleted = JSON.parse(
+            localStorage.getItem(`week-completed-${weekKey}`) || "{}",
+          );
+        } catch (e) {
+          continue;
+        }
+
+        let weekScheduled = 0;
+        let weekDone = 0;
+
+        Object.entries(weekInstances).forEach(([dayIdx, instances]) => {
+          if (!Array.isArray(instances)) return;
+          instances.forEach((inst) => {
+            if (programTemplateIds.includes(inst.templateId)) {
+              stats.totalScheduled++;
+              weekScheduled++;
+              stats.weeksSeen.add(weekKey);
+
+              if (stats.dayBreakdown[inst.templateId]) {
+                stats.dayBreakdown[inst.templateId].scheduled++;
+              }
+
+              // Check completion
+              const isCompleted =
+                weekCompleted[dayIdx]?.[inst.id] ||
+                weekCompleted[inst.id] ||
+                false;
+              if (isCompleted) {
+                stats.totalCompleted++;
+                weekDone++;
+                if (stats.dayBreakdown[inst.templateId]) {
+                  stats.dayBreakdown[inst.templateId].completed++;
+                }
+              }
+            }
+          });
+        });
+
+        if (weekScheduled > 0) {
+          stats.weeklyHistory.push({
+            weekKey,
+            scheduled: weekScheduled,
+            completed: weekDone,
+          });
+        }
+      }
+
+      // Also check current in-memory dayInstances
+      Object.entries(dayInstances || {}).forEach(([dayIdx, instances]) => {
+        if (!Array.isArray(instances)) return;
+        instances.forEach((inst) => {
+          if (programTemplateIds.includes(inst.templateId)) {
+            // Avoid double counting (already counted from localStorage)
+            // Just ensure we have at least current week data
+          }
+        });
+      });
+
+      // Determine first/last dates from weekKeys
+      const sortedWeeks = Array.from(stats.weeksSeen).sort();
+      if (sortedWeeks.length > 0) {
+        stats.firstSeen = sortedWeeks[0];
+        stats.lastSeen = sortedWeeks[sortedWeeks.length - 1];
+      }
+
+      // Sort weekly history
+      stats.weeklyHistory.sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+
+      return stats;
+    })();
+
+    // Exercise volume totals
+    const totalExercises = prog.days.reduce(
+      (sum, d) => sum + d.exercises.length,
+      0,
+    );
+    const totalSets = prog.days.reduce(
+      (sum, d) =>
+        sum + d.exercises.reduce((s, ex) => s + (parseInt(ex.sets) || 0), 0),
+      0,
+    );
+    const completionRate =
+      allWeekStats.totalScheduled > 0
+        ? Math.round(
+            (allWeekStats.totalCompleted / allWeekStats.totalScheduled) * 100,
+          )
+        : 0;
+    const weeksActive = allWeekStats.weeksSeen.size;
+
     return (
       <div className="pb-20">
         {/* Back + Header */}
@@ -883,6 +1014,227 @@ function TrainingView({ commitmentTemplates, onCreateCommitment }) {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ═══════════════════════════════════════════════
+             PROGRAM STATISTICS
+           ═══════════════════════════════════════════════ */}
+        <div className="glass-card p-6 mb-8">
+          <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2 mb-5">
+            <i className="fa-solid fa-chart-bar text-blue-500"></i>
+            Program Statistics
+          </h3>
+
+          {/* Overview Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 text-center border border-blue-200 dark:border-blue-500/20">
+              <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                {allWeekStats.totalScheduled}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                Days Scheduled
+              </p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-500/10 rounded-xl p-4 text-center border border-green-200 dark:border-green-500/20">
+              <p className="text-2xl font-black text-green-600 dark:text-green-400">
+                {allWeekStats.totalCompleted}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                Days Completed
+              </p>
+            </div>
+            <div className="bg-purple-50 dark:bg-purple-500/10 rounded-xl p-4 text-center border border-purple-200 dark:border-purple-500/20">
+              <p className="text-2xl font-black text-purple-600 dark:text-purple-400">
+                {completionRate}%
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                Completion Rate
+              </p>
+            </div>
+            <div className="bg-orange-50 dark:bg-orange-500/10 rounded-xl p-4 text-center border border-orange-200 dark:border-orange-500/20">
+              <p className="text-2xl font-black text-orange-600 dark:text-orange-400">
+                {weeksActive}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                Weeks Active
+              </p>
+            </div>
+          </div>
+
+          {/* Application Period */}
+          {allWeekStats.firstSeen && (
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-200 dark:border-slate-700">
+              <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-2">
+                <i className="fa-solid fa-calendar-days mr-1"></i> Application
+                Period
+              </p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {allWeekStats.firstSeen} → {allWeekStats.lastSeen}
+                <span className="text-xs text-slate-400 ml-2">
+                  ({weeksActive} week{weeksActive !== 1 ? "s" : ""})
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* Volume Summary */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-200 dark:border-slate-700">
+            <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-3">
+              <i className="fa-solid fa-fire mr-1"></i> Volume Per Session
+            </p>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-xl font-black text-slate-900 dark:text-white">
+                  {totalExercises}
+                </p>
+                <p className="text-xs text-slate-400">Exercises</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-slate-900 dark:text-white">
+                  {totalSets}
+                </p>
+                <p className="text-xs text-slate-400">Total Sets</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-slate-900 dark:text-white">
+                  {allWeekStats.totalCompleted > 0
+                    ? totalSets * allWeekStats.totalCompleted
+                    : totalSets}
+                </p>
+                <p className="text-xs text-slate-400">Lifetime Sets</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Per-Day Breakdown */}
+          {Object.values(allWeekStats.dayBreakdown).some(
+            (d) => d.scheduled > 0,
+          ) && (
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-3">
+                <i className="fa-solid fa-list-check mr-1"></i> Day Breakdown
+              </p>
+              <div className="space-y-2">
+                {Object.entries(allWeekStats.dayBreakdown).map(
+                  ([tid, data]) => {
+                    const dayRate =
+                      data.scheduled > 0
+                        ? Math.round((data.completed / data.scheduled) * 100)
+                        : 0;
+                    return (
+                      <div
+                        key={tid}
+                        className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg p-3 border border-slate-200 dark:border-slate-700"
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                          style={{ background: prog.color }}
+                        >
+                          <i className="fa-solid fa-dumbbell"></i>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                            {data.label}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {data.muscleGroups.join(" • ") || "—"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className="text-sm font-bold"
+                            style={{ color: prog.color }}
+                          >
+                            {data.completed}/{data.scheduled}
+                          </p>
+                          <p className="text-xs text-slate-400">{dayRate}%</p>
+                        </div>
+                        <div className="w-16 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${dayRate}%`,
+                              background: prog.color,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  },
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Weekly History */}
+          {allWeekStats.weeklyHistory.length > 0 && (
+            <div>
+              <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-widest mb-3">
+                <i className="fa-solid fa-timeline mr-1"></i> Weekly History
+              </p>
+              <div className="flex gap-1 items-end h-24">
+                {allWeekStats.weeklyHistory.map((wh, idx) => {
+                  const maxVal = Math.max(
+                    ...allWeekStats.weeklyHistory.map((w) => w.scheduled),
+                    1,
+                  );
+                  const height = Math.max((wh.scheduled / maxVal) * 100, 8);
+                  const completedHeight =
+                    wh.scheduled > 0
+                      ? (wh.completed / wh.scheduled) * height
+                      : 0;
+                  return (
+                    <div
+                      key={idx}
+                      className="flex-1 flex flex-col items-center gap-0.5"
+                      title={`${wh.weekKey}: ${wh.completed}/${wh.scheduled}`}
+                    >
+                      <div
+                        className="w-full relative rounded-t"
+                        style={{
+                          height: `${height}%`,
+                          background: `${prog.color}20`,
+                        }}
+                      >
+                        <div
+                          className="absolute bottom-0 left-0 right-0 rounded-t"
+                          style={{
+                            height: `${completedHeight}%`,
+                            background: prog.color,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-[8px] text-slate-400 truncate w-full text-center">
+                        {wh.weekKey.split("-")[1]}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span>Scheduled</span>
+                <span className="flex items-center gap-1">
+                  <span
+                    className="w-2 h-2 rounded-sm"
+                    style={{ background: `${prog.color}20` }}
+                  ></span>{" "}
+                  Total
+                  <span
+                    className="w-2 h-2 rounded-sm"
+                    style={{ background: prog.color }}
+                  ></span>{" "}
+                  Done
+                </span>
+              </div>
+            </div>
+          )}
+
+          {allWeekStats.totalScheduled === 0 && (
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-4">
+              No schedule data yet. Add training days to your weekly schedule to
+              start tracking progress.
+            </p>
+          )}
         </div>
 
         {/* Physical Progress Section */}

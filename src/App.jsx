@@ -1831,6 +1831,8 @@ function MainApp({ session, onSignOut }) {
           {currentView === "training" && (
             <TrainingView
               commitmentTemplates={commitmentTemplates}
+              dayInstances={dayInstances}
+              completedInstances={completedInstances}
               onCreateCommitment={(template) => {
                 setCommitmentTemplates((prev) => {
                   // Avoid duplicates
