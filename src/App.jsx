@@ -143,6 +143,7 @@ function MainApp({ session, onSignOut }) {
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [showStorageManager, setShowStorageManager] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [draggedTemplate, setDraggedTemplate] = useState(null);
   const [currentView, setCurrentView] = useState("timetable"); // 'timetable', 'training', 'content', 'stats'
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1448,6 +1449,15 @@ function MainApp({ session, onSignOut }) {
                 )}
               </button>
 
+              {/* Profile button */}
+              <button
+                onClick={() => setShowProfile(true)}
+                className="px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                title="Profile"
+              >
+                <i className="fa-solid fa-user"></i>
+              </button>
+
               {/* Three-dot options menu */}
               <div className="relative">
                 <button
@@ -1882,6 +1892,180 @@ function MainApp({ session, onSignOut }) {
       </div>
 
       {/* Template Modal */}
+
+      {/* Profile Modal */}
+      {showProfile && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
+            {/* Profile Header */}
+            <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 px-6 pt-8 pb-14">
+              <button
+                onClick={() => setShowProfile(false)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white text-lg transition"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+              <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                <i className="fa-solid fa-user-circle mr-2"></i>Profile
+              </h3>
+            </div>
+
+            {/* Avatar */}
+            <div className="flex justify-center -mt-10 mb-4">
+              <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-900 shadow-lg flex items-center justify-center">
+                <span className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                  {(session?.user?.email?.[0] || "U").toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            <div className="px-6 pb-6 space-y-4">
+              {/* Email */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-1">
+                  <i className="fa-solid fa-envelope mr-1"></i> Email
+                </p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white break-all">
+                  {session?.user?.email || "—"}
+                </p>
+              </div>
+
+              {/* User ID */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-1">
+                  <i className="fa-solid fa-fingerprint mr-1"></i> User ID
+                </p>
+                <p className="text-xs font-mono text-slate-500 dark:text-slate-400 break-all">
+                  {session?.user?.id || "—"}
+                </p>
+              </div>
+
+              {/* Account Details */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-2">
+                  <i className="fa-solid fa-shield-halved mr-1"></i> Account
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Provider
+                    </span>
+                    <span className="font-medium text-slate-900 dark:text-white capitalize">
+                      {session?.user?.app_metadata?.provider || "email"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Joined
+                    </span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {session?.user?.created_at
+                        ? new Date(session.user.created_at).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Last Sign In
+                    </span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {session?.user?.last_sign_in_at
+                        ? new Date(
+                            session.user.last_sign_in_at,
+                          ).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Email Verified
+                    </span>
+                    <span
+                      className={`font-medium ${session?.user?.email_confirmed_at ? "text-green-600 dark:text-green-400" : "text-orange-500"}`}
+                    >
+                      {session?.user?.email_confirmed_at
+                        ? "Verified ✓"
+                        : "Pending"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* App Stats */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-2">
+                  <i className="fa-solid fa-chart-pie mr-1"></i> Your Data
+                </p>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-lg font-black text-slate-900 dark:text-white">
+                      {commitmentTemplates.length}
+                    </p>
+                    <p className="text-[10px] text-slate-400">Templates</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-slate-900 dark:text-white">
+                      {Object.values(dayInstances).reduce(
+                        (sum, arr) =>
+                          sum + (Array.isArray(arr) ? arr.length : 0),
+                        0,
+                      )}
+                    </p>
+                    <p className="text-[10px] text-slate-400">Scheduled</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-slate-900 dark:text-white">
+                      {Object.values(completedInstances).reduce((sum, day) => {
+                        if (typeof day === "object" && day !== null) {
+                          return (
+                            sum + Object.values(day).filter(Boolean).length
+                          );
+                        }
+                        return sum + (day ? 1 : 0);
+                      }, 0)}
+                    </p>
+                    <p className="text-[10px] text-slate-400">Completed</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setShowProfile(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProfile(false);
+                    onSignOut();
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition"
+                >
+                  <i className="fa-solid fa-right-from-bracket mr-1"></i> Sign
+                  Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <CommitmentTemplateModal
         isOpen={showTemplateModal}
         onClose={() => {
