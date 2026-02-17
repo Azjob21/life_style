@@ -159,11 +159,11 @@ html.dark .day-selector label:hover {
 }
 
 .calendar-day {
-  @apply bg-blue-100/50 border border-blue-300 rounded-xl p-3 min-h-[200px] lg:min-h-[500px] overflow-y-auto transition-colors duration-300 shadow-sm hover:border-blue-400;
+  @apply bg-transparent min-h-[200px] lg:min-h-[500px] overflow-y-auto transition-colors duration-300 px-1.5 py-2;
 }
 
 html.dark .calendar-day {
-  @apply bg-slate-900/40 border-slate-800;
+  @apply bg-transparent;
 }
 
 .commitment-block {
@@ -212,9 +212,9 @@ html.dark .form-input:focus {
 
 /* Drag and drop states */
 .calendar-day.drag-over {
-  @apply ring-2 ring-green-600 scale-105;
+  @apply bg-blue-50/50 dark:bg-blue-500/5;
 }
 
 html.dark .calendar-day.drag-over {
-  @apply ring-green-400;
+  @apply bg-blue-500/5;
 }

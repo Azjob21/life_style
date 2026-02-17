@@ -61,34 +61,49 @@ function WeeklyCalendar({
 
   return (
     <div className="mb-8">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      {/* Day Headers Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 border-b-2 border-slate-200 dark:border-slate-800">
+        {DAYS_SHORT.map((day, dayIdx) => {
+          const instances = dayInstances[dayIdx] || [];
+          const isToday =
+            new Date().getDay() === (dayIdx === 6 ? 0 : dayIdx + 1);
+          return (
+            <div
+              key={dayIdx}
+              className={`py-3 text-center ${dayIdx < 6 ? "border-r border-slate-200 dark:border-slate-800" : ""}`}
+            >
+              <p
+                className={`font-black text-xs uppercase tracking-widest ${isToday ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}
+              >
+                {day}
+              </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-bold">
+                {instances.length} {instances.length === 1 ? "block" : "blocks"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Day Columns */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {DAYS_SHORT.map((day, dayIdx) => {
           const instances = dayInstances[dayIdx] || [];
 
           return (
             <div
               key={dayIdx}
-              className={`calendar-day flex flex-col transition-all cursor-pointer hover:shadow-lg ${
-                dragOverDay === dayIdx ? "ring-2 ring-blue-400 scale-105" : ""
-              }`}
+              className={`calendar-day flex flex-col transition-all cursor-pointer ${dayIdx < 6 ? "border-r border-slate-200/60 dark:border-slate-800/60" : ""} ${
+                dragOverDay === dayIdx ? "bg-blue-50/50 dark:bg-blue-500/5" : ""
+              } hover:bg-slate-50/50 dark:hover:bg-slate-800/20`}
               onClick={() => onOpenDayView?.(dayIdx)}
               onDragOver={handleDragOver}
               onDragLeave={() => setDragOverDay(null)}
               onDrop={() => handleDrop(dayIdx)}
               onDragEnter={() => setDragOverDay(dayIdx)}
             >
-              {/* Day Header */}
-              <div className="mb-3 text-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                <p className="font-black text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400">
-                  {day}
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-bold">
-                  {instances.length} Blocks
-                </p>
-              </div>
-
               {/* Drop zone & commitments */}
-              <div className="flex-1 min-h-[200px] lg:min-h-64 bg-slate-700/20 rounded-lg p-2 space-y-1 border border-dashed border-slate-600/30">
+              <div className="flex-1 space-y-1">
                 {instances.length === 0 ? (
                   <p className="text-xs text-slate-600 dark:text-slate-500 italic text-center py-4">
                     Drop or click to add
@@ -201,7 +216,7 @@ function WeeklyCalendar({
       </div>
 
       {/* Legend */}
-      <div className="mt-8 p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
         <p className="text-xs font-black text-slate-900 dark:text-slate-400 uppercase mb-3 tracking-widest">
           Commitment Legend
         </p>
