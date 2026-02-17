@@ -61,15 +61,16 @@ function WeeklyCalendar({
 
   return (
     <div className="mb-8">
-      <div className="grid grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {DAYS_SHORT.map((day, dayIdx) => {
           const instances = dayInstances[dayIdx] || [];
 
           return (
             <div
               key={dayIdx}
-              className={`calendar-day flex flex-col transition-all cursor-pointer hover:shadow-lg ${dragOverDay === dayIdx ? "ring-2 ring-blue-400 scale-105" : ""
-                }`}
+              className={`calendar-day flex flex-col transition-all cursor-pointer hover:shadow-lg ${
+                dragOverDay === dayIdx ? "ring-2 ring-blue-400 scale-105" : ""
+              }`}
               onClick={() => onOpenDayView?.(dayIdx)}
               onDragOver={handleDragOver}
               onDragLeave={() => setDragOverDay(null)}
@@ -78,14 +79,16 @@ function WeeklyCalendar({
             >
               {/* Day Header */}
               <div className="mb-3 text-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                <p className="font-black text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400">{day}</p>
+                <p className="font-black text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                  {day}
+                </p>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-bold">
                   {instances.length} Blocks
                 </p>
               </div>
 
               {/* Drop zone & commitments */}
-              <div className="flex-1 min-h-64 bg-slate-700/20 rounded-lg p-2 space-y-1 border border-dashed border-slate-600/30">
+              <div className="flex-1 min-h-[200px] lg:min-h-64 bg-slate-700/20 rounded-lg p-2 space-y-1 border border-dashed border-slate-600/30">
                 {instances.length === 0 ? (
                   <p className="text-xs text-slate-600 dark:text-slate-500 italic text-center py-4">
                     Drop or click to add
@@ -102,12 +105,13 @@ function WeeklyCalendar({
                       instance.endTime,
                     );
 
-                    const isCompleted = completedInstances[dayIdx]?.[instance.id] || false;
+                    const isCompleted =
+                      completedInstances[dayIdx]?.[instance.id] || false;
 
                     return (
                       <div
                         key={instance.id}
-                        className={`group relative cursor-pointer transition hover:shadow-lg ${isCompleted ? 'opacity-60' : ''}`}
+                        className={`group relative cursor-pointer transition hover:shadow-lg ${isCompleted ? "opacity-60" : ""}`}
                         style={{
                           height: `${height}px`,
                           background: `${template.color}30`,
@@ -119,7 +123,7 @@ function WeeklyCalendar({
                         <div className="p-1 text-xs h-full flex flex-col justify-between">
                           <div>
                             <div
-                              className={`font-bold truncate ${isCompleted ? 'line-through' : ''}`}
+                              className={`font-bold truncate ${isCompleted ? "line-through" : ""}`}
                               style={{ color: template.color }}
                             >
                               {template.name}
@@ -135,10 +139,14 @@ function WeeklyCalendar({
                             style={{
                               background: `${template.color}40`,
                               color: template.color,
-                              fontSize: '10px'
+                              fontSize: "10px",
                             }}
                           >
-                            ⏱ {formatDuration(instance.startTime, instance.endTime)}
+                            ⏱{" "}
+                            {formatDuration(
+                              instance.startTime,
+                              instance.endTime,
+                            )}
                           </div>
                         </div>
 
@@ -149,10 +157,14 @@ function WeeklyCalendar({
                               e.stopPropagation();
                               onToggleCompletion(dayIdx, instance.id);
                             }}
-                            className={`w-6 h-6 rounded ${isCompleted ? 'bg-green-500' : 'bg-slate-700 dark:bg-slate-300'} hover:bg-green-600 flex items-center justify-center text-white text-xs`}
-                            title={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+                            className={`w-6 h-6 rounded ${isCompleted ? "bg-green-500" : "bg-slate-700 dark:bg-slate-300"} hover:bg-green-600 flex items-center justify-center text-white text-xs`}
+                            title={
+                              isCompleted
+                                ? "Mark as incomplete"
+                                : "Mark as complete"
+                            }
                           >
-                            {isCompleted ? '✓' : '○'}
+                            {isCompleted ? "✓" : "○"}
                           </button>
                           <button
                             onClick={() =>
@@ -195,15 +207,19 @@ function WeeklyCalendar({
         </p>
         <div className="flex flex-wrap gap-4 text-xs">
           {commitmentTemplates.length === 0 ? (
-            <span className="text-slate-400 italic">No templates created yet</span>
+            <span className="text-slate-400 italic">
+              No templates created yet
+            </span>
           ) : (
-            commitmentTemplates.map(template => (
+            commitmentTemplates.map((template) => (
               <div key={template.id} className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-sm"
                   style={{ backgroundColor: template.color }}
                 ></div>
-                <span className="font-black text-slate-900 dark:text-slate-300">{template.name}</span>
+                <span className="font-black text-slate-900 dark:text-slate-300">
+                  {template.name}
+                </span>
               </div>
             ))
           )}

@@ -58,7 +58,7 @@ function Sidebar({
   );
 
   return (
-    <div className="w-80 bg-white dark:bg-[#0f172a] backdrop-blur border-r border-slate-200 dark:border-slate-800 p-6 overflow-y-auto">
+    <div className="w-72 sm:w-80 h-full bg-white dark:bg-[#0f172a] backdrop-blur border-r border-slate-200 dark:border-slate-800 p-4 sm:p-6 overflow-y-auto">
       {/* Logo */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-blue-600 dark:text-blue-400 mb-2">

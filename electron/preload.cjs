@@ -7,4 +7,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   listSavedFiles: () => ipcRenderer.invoke("list-saved-files"),
   deleteFile: (filename) => ipcRenderer.invoke("delete-file", filename),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+
+  // Generic database request handler that forwards to main process
+  databaseRequest: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 });

@@ -42,3 +42,5 @@ tmp/
 
 # App-specific
 Documents/Schedule App/
+.vercel
+.env*.local

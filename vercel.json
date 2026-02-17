@@ -1,0 +1,7 @@
+{
+  "installCommand": "npm install --ignore-scripts",
+  "buildCommand": "npx vite build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+}

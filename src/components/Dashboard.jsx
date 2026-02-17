@@ -1,6 +1,12 @@
 import React from "react";
+import ProgressPanel from "./ProgressPanel";
 
-function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {}, onEditTemplate }) {
+function Dashboard({
+  dayInstances,
+  commitmentTemplates,
+  completedInstances = {},
+  onEditTemplate,
+}) {
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   // Calculate statistics
@@ -56,7 +62,10 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
 
     Object.entries(dayInstances).forEach(([dayIdx, instances]) => {
       instances?.forEach((instance) => {
-        const duration = calculateDurationMinutes(instance.startTime, instance.endTime);
+        const duration = calculateDurationMinutes(
+          instance.startTime,
+          instance.endTime,
+        );
         totalMinutes += duration;
 
         if (completedInstances[dayIdx]?.[instance.id]) {
@@ -68,7 +77,10 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
     return {
       totalHours: (totalMinutes / 60).toFixed(1),
       completedHours: (completedMinutes / 60).toFixed(1),
-      percentage: totalMinutes > 0 ? Math.round((completedMinutes / totalMinutes) * 100) : 0
+      percentage:
+        totalMinutes > 0
+          ? Math.round((completedMinutes / totalMinutes) * 100)
+          : 0,
     };
   };
 
@@ -76,12 +88,13 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
     totalInstances: getTotalInstances(),
     completedInstances: getCompletedCount(),
     instancesByTemplate: getInstancesByTemplate(),
-    time: getTimeStats()
+    time: getTimeStats(),
   };
 
-  const completionRate = stats.totalInstances > 0
-    ? Math.round((stats.completedInstances / stats.totalInstances) * 100)
-    : 0;
+  const completionRate =
+    stats.totalInstances > 0
+      ? Math.round((stats.completedInstances / stats.totalInstances) * 100)
+      : 0;
 
   return (
     <section className="glass-card p-6">
@@ -101,18 +114,22 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
       ) : (
         <div>
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {/* Completion Rate */}
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Completion</span>
-                <span className={`text-2xl font-bold ${completionRate >= 80 ? 'text-green-500' : completionRate >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">
+                  Completion
+                </span>
+                <span
+                  className={`text-2xl font-bold ${completionRate >= 80 ? "text-green-500" : completionRate >= 50 ? "text-amber-500" : "text-red-500"}`}
+                >
                   {completionRate}%
                 </span>
               </div>
               <div className="w-full bg-slate-700 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${completionRate >= 80 ? 'bg-green-500' : completionRate >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                  className={`h-full rounded-full transition-all duration-500 ${completionRate >= 80 ? "bg-green-500" : completionRate >= 50 ? "bg-amber-500" : "bg-red-500"}`}
                   style={{ width: `${completionRate}%` }}
                 ></div>
               </div>
@@ -124,7 +141,9 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
             {/* Time Stats */}
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Time Tracked</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">
+                  Time Tracked
+                </span>
                 <span className="text-2xl font-bold text-blue-400">
                   {stats.time.completedHours}h
                 </span>
@@ -143,7 +162,9 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
             {/* Template Stats */}
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Total Templates</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">
+                  Total Templates
+                </span>
                 <span className="text-2xl font-bold text-purple-400">
                   {commitmentTemplates.length}
                 </span>
@@ -156,7 +177,9 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
             {/* Utilization */}
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">Active Templates</span>
+                <span className="text-xs text-slate-900 dark:text-slate-500 uppercase font-black tracking-widest">
+                  Active Templates
+                </span>
                 <span className="text-2xl font-bold text-indigo-400">
                   {Object.keys(stats.instancesByTemplate).length}
                 </span>
@@ -168,22 +191,30 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
           </div>
 
           {/* Daily Breakdown & Streak */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
             {/* Daily Chart */}
-            <div className="md:col-span-2 p-6 bg-slate-700/30 dark:bg-amber-900/10 rounded-xl border border-purple-500/10 dark:border-amber-500/10">
-              <h4 className="text-sm font-black text-slate-900 dark:text-amber-200/60 uppercase mb-4 tracking-tighter">Daily Performance</h4>
+            <div className="md:col-span-2 p-4 sm:p-6 bg-slate-700/30 dark:bg-amber-900/10 rounded-xl border border-purple-500/10 dark:border-amber-500/10">
+              <h4 className="text-sm font-black text-slate-900 dark:text-amber-200/60 uppercase mb-4 tracking-tighter">
+                Daily Performance
+              </h4>
               <div className="flex items-end justify-between h-32 gap-2">
                 {DAYS.map((day, idx) => {
                   const dayInsts = dayInstances[idx] || [];
                   const total = dayInsts.length;
-                  const completed = dayInsts.filter(i => completedInstances[idx]?.[i.id]).length;
-                  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+                  const completed = dayInsts.filter(
+                    (i) => completedInstances[idx]?.[i.id],
+                  ).length;
+                  const percent =
+                    total > 0 ? Math.round((completed / total) * 100) : 0;
 
                   return (
-                    <div key={day} className="flex flex-col items-center gap-2 flex-1 h-full justify-end group">
+                    <div
+                      key={day}
+                      className="flex flex-col items-center gap-2 flex-1 h-full justify-end group"
+                    >
                       <div className="relative w-full flex justify-center h-full items-end">
                         <div
-                          className={`w-full max-w-[30px] rounded-t transition-all duration-500 hover:opacity-80 ${percent >= 80 ? 'bg-green-500' : percent >= 50 ? 'bg-amber-500' : 'bg-slate-600 dark:bg-slate-700'}`}
+                          className={`w-full max-w-[30px] rounded-t transition-all duration-500 hover:opacity-80 ${percent >= 80 ? "bg-green-500" : percent >= 50 ? "bg-amber-500" : "bg-slate-600 dark:bg-slate-700"}`}
                           style={{ height: `${percent > 0 ? percent : 5}%` }}
                         ></div>
                         {/* Tooltip */}
@@ -191,7 +222,9 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                           {completed}/{total} ({percent}%)
                         </div>
                       </div>
-                      <span className="text-xs text-slate-900 dark:text-slate-400 font-black">{day}</span>
+                      <span className="text-xs text-slate-900 dark:text-slate-400 font-black">
+                        {day}
+                      </span>
                     </div>
                   );
                 })}
@@ -213,7 +246,9 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                   for (let i = todayIdx; i >= 0; i--) {
                     const dayInsts = dayInstances[i] || [];
                     if (dayInsts.length > 0) {
-                      const completed = dayInsts.filter(item => completedInstances[i]?.[item.id]).length;
+                      const completed = dayInsts.filter(
+                        (item) => completedInstances[i]?.[item.id],
+                      ).length;
                       if (completed > 0) streak++;
                       else break;
                     }
@@ -221,9 +256,18 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                   return streak;
                 })()}
               </div>
-              <div className="text-sm font-bold text-orange-400 uppercase tracking-widest">Day Streak</div>
-              <p className="text-xs text-slate-700 dark:text-slate-400 mt-2 font-bold">Consistency is key!</p>
+              <div className="text-sm font-bold text-orange-400 uppercase tracking-widest">
+                Day Streak
+              </div>
+              <p className="text-xs text-slate-700 dark:text-slate-400 mt-2 font-bold">
+                Consistency is key!
+              </p>
             </div>
+          </div>
+
+          {/* Advancement & Progress Section */}
+          <div className="mb-8">
+            <ProgressPanel />
           </div>
 
           {/* Templates Grid */}
@@ -276,7 +320,7 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                       }}
                     >
                       <i className={getPriorityIcon(template.priority)}></i>
-                      {template.priority.toUpperCase()}
+                      {(template.priority || "medium").toUpperCase()}
                     </span>
                   </div>
 
@@ -304,10 +348,11 @@ function Dashboard({ dayInstances, commitmentTemplates, completedInstances = {},
                       return (
                         <span
                           key={idx}
-                          className={`px-2 py-1 rounded text-xs ${used
-                            ? "bg-green-500/30 text-green-400"
-                            : "bg-slate-700/30 text-slate-500"
-                            }`}
+                          className={`px-2 py-1 rounded text-xs ${
+                            used
+                              ? "bg-green-500/30 text-green-400"
+                              : "bg-slate-700/30 text-slate-500"
+                          }`}
                         >
                           {day}
                         </span>
