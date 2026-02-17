@@ -1482,20 +1482,20 @@ function MainApp({ session, onSignOut }) {
       <div className="flex-1 overflow-y-auto w-full bg-white dark:bg-slate-950">
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 sm:mb-8">
-            <div className="flex items-center gap-3">
+          <div className="flex justify-between items-start gap-2 sm:gap-4 mb-4 sm:mb-8">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {/* Mobile hamburger */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                className="lg:hidden p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white flex-shrink-0"
               >
                 <i className="fa-solid fa-bars text-lg"></i>
               </button>
-              <div>
-                <h2 className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 text-slate-900 dark:text-white tracking-tighter uppercase">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-2xl md:text-4xl font-black mb-0.5 sm:mb-2 text-slate-900 dark:text-white tracking-tighter uppercase truncate">
                   Weekly Schedule
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => changeWeek(-1)}
                     className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition text-slate-400 dark:text-slate-500"
@@ -1503,7 +1503,7 @@ function MainApp({ session, onSignOut }) {
                   >
                     <i className="fa-solid fa-chevron-left text-xs"></i>
                   </button>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
+                  <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-sm font-medium whitespace-nowrap">
                     {weekDateRange}
                   </p>
                   <button
@@ -1516,7 +1516,7 @@ function MainApp({ session, onSignOut }) {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex gap-1.5 sm:gap-2 items-center flex-shrink-0">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className="px-3 py-2 rounded bg-slate-100 dark:bg-slate-300 hover:bg-slate-200 dark:hover:bg-slate-200 transition text-sm text-slate-900 dark:text-slate-900 border border-slate-200 dark:border-transparent"
@@ -1556,7 +1556,7 @@ function MainApp({ session, onSignOut }) {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowOptionsMenu(false)}
                     />
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden max-h-[80vh] overflow-y-auto">
+                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-[300px] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
                       {/* ── EXPORT ── */}
                       <div className="px-3 pt-3 pb-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1849,47 +1849,26 @@ function MainApp({ session, onSignOut }) {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mb-6 sm:mb-8 flex gap-2 border-b border-slate-700/50 pb-4 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setCurrentView("timetable")}
-              className={`px-3 sm:px-4 py-2 rounded border transition text-sm whitespace-nowrap ${
-                currentView === "timetable"
-                  ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-              }`}
-            >
-              <i className="fa-solid fa-clock mr-2"></i>Timetable
-            </button>
-            <button
-              onClick={() => setCurrentView("training")}
-              className={`px-4 py-2 rounded border transition ${
-                currentView === "training"
-                  ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-              }`}
-            >
-              <i className="fa-solid fa-dumbbell mr-2"></i>Training
-            </button>
-            <button
-              onClick={() => setCurrentView("content")}
-              className={`px-4 py-2 rounded border transition ${
-                currentView === "content"
-                  ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-              }`}
-            >
-              <i className="fa-solid fa-video mr-2"></i>Content
-            </button>
-            <button
-              onClick={() => setCurrentView("stats")}
-              className={`px-4 py-2 rounded border transition ${
-                currentView === "stats"
-                  ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
-                  : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-              }`}
-            >
-              <i className="fa-solid fa-chart-line mr-2"></i>Stats
-            </button>
+          <div className="mb-4 sm:mb-8 flex gap-1.5 sm:gap-2 border-b border-slate-200 dark:border-slate-700/50 pb-3 sm:pb-4 overflow-x-auto no-scrollbar">
+            {[
+              { key: "timetable", icon: "fa-clock", label: "Timetable" },
+              { key: "training", icon: "fa-dumbbell", label: "Training" },
+              { key: "content", icon: "fa-video", label: "Content" },
+              { key: "stats", icon: "fa-chart-line", label: "Stats" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setCurrentView(tab.key)}
+                className={`px-3 sm:px-4 py-2 rounded border transition text-sm whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
+                  currentView === tab.key
+                    ? "bg-blue-600 dark:bg-slate-300 border-blue-600 dark:border-slate-400 text-white dark:text-slate-900"
+                    : "border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                }`}
+              >
+                <i className={`fa-solid ${tab.icon}`}></i>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
           </div>
 
           {/* VIEW: TIMETABLE */}
@@ -2002,25 +1981,26 @@ function MainApp({ session, onSignOut }) {
       {/* Profile Panel — Horizontal */}
       {showProfile && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
             {/* Compact Header */}
-            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center">
-                  <span className="text-xl font-black text-white">
+            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg sm:text-xl font-black text-white">
                     {(session?.user?.email?.[0] || "U").toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <h3 className="text-base font-black text-white uppercase tracking-tight">
-                    <i className="fa-solid fa-user-circle mr-2"></i>Profile
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+                    <i className="fa-solid fa-user-circle mr-1.5 sm:mr-2"></i>
+                    Profile
                   </h3>
-                  <p className="text-xs text-white/70 truncate max-w-[250px]">
+                  <p className="text-[10px] sm:text-xs text-white/70 truncate max-w-[150px] sm:max-w-[250px]">
                     {session?.user?.email || "—"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <button
                   onClick={() => {
                     setShowProfile(false);
@@ -2041,7 +2021,7 @@ function MainApp({ session, onSignOut }) {
             </div>
 
             {/* Horizontal Body */}
-            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-3 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               {/* Column 1: Account Info */}
               <div className="space-y-3">
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">

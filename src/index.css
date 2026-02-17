@@ -159,7 +159,23 @@ html.dark .day-selector label:hover {
 }
 
 .calendar-day {
-  @apply bg-transparent min-h-[200px] lg:min-h-[500px] overflow-y-auto transition-colors duration-300 px-1.5 py-2;
+  @apply bg-transparent min-h-[120px] sm:min-h-[200px] lg:min-h-[500px] overflow-y-auto transition-colors duration-300 px-1 sm:px-1.5 py-1.5 sm:py-2;
+}
+
+/* Mobile touch: always show action buttons on small screens */
+@media (max-width: 640px) {
+  .calendar-day .group .group-hover\:opacity-100 {
+    opacity: 1 !important;
+  }
+}
+
+/* Hide scrollbar but keep scroll on mobile nav */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 html.dark .calendar-day {

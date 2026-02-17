@@ -971,7 +971,7 @@ function TrainingView({
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2 flex-wrap">
             <button
               onClick={() => {
                 if (!onApplyToSchedule) return;
@@ -1012,22 +1012,23 @@ function TrainingView({
                 }
                 onApplyToSchedule(instances);
               }}
-              className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold transition"
             >
-              <i className="fa-solid fa-calendar-plus mr-1"></i>Apply to
-              Schedule
+              <i className="fa-solid fa-calendar-plus mr-1"></i>
+              <span className="hidden sm:inline">Apply to </span>Schedule
             </button>
             <button
               onClick={() => openBuilder(prog)}
-              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition"
             >
               <i className="fa-solid fa-pen mr-1"></i>Edit
             </button>
             <button
               onClick={() => setShowPhysicalForm(true)}
-              className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-bold transition"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs sm:text-sm font-bold transition"
             >
-              <i className="fa-solid fa-ruler-combined mr-1"></i>Log Body
+              <i className="fa-solid fa-ruler-combined mr-1"></i>
+              <span className="hidden sm:inline">Log </span>Body
             </button>
           </div>
         </div>

@@ -724,25 +724,26 @@ function ContentView({
               </p>
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1.5 sm:gap-2 flex-wrap">
             <button
               onClick={() => openItemEditor()}
-              className="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm font-bold transition"
             >
-              <i className="fa-solid fa-plus mr-1"></i>Add Content
+              <i className="fa-solid fa-plus mr-1"></i>
+              <span className="hidden sm:inline">Add </span>Content
             </button>
             <button
               onClick={() => openBuilder(plan)}
-              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition"
             >
-              <i className="fa-solid fa-pen mr-1"></i>Edit Plan
+              <i className="fa-solid fa-pen mr-1"></i>Edit
             </button>
             <button
               onClick={applyPlanToSchedule}
-              className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-bold transition"
+              className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs sm:text-sm font-bold transition"
             >
-              <i className="fa-solid fa-calendar-plus mr-1"></i>Apply to
-              Schedule
+              <i className="fa-solid fa-calendar-plus mr-1"></i>
+              <span className="hidden sm:inline">Apply to </span>Schedule
             </button>
           </div>
         </div>
