@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Sidebar from "./components/Sidebar";
 import WeeklyCalendar from "./components/WeeklyCalendar";
 import Dashboard from "./components/Dashboard";
@@ -6,13 +6,18 @@ import CommitmentTemplateModal from "./components/CommitmentTemplateModal";
 import TimingUpdateModal from "./components/TimingUpdateModal";
 import TemplateManager from "./components/TemplateManager";
 import StorageManager from "./components/StorageManager";
-// WeekNavigator removed — navigation buttons removed for cleaner layout
 import TrainingView from "./components/TrainingView";
 import ContentView from "./components/ContentView";
 import StatsView from "./components/StatsView";
 import DayView from "./components/DayView";
 import AuthScreen from "./components/AuthScreen";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ToastProvider, useToast } from "./components/Toast";
+import ReminderSystem from "./components/ReminderSystem";
+import GoalsPanel from "./components/GoalsPanel";
+import HabitStreaks from "./components/HabitStreaks";
+import GlobalSearch from "./components/GlobalSearch";
+import OnboardingGuide from "./components/OnboardingGuide";
 import useBackend from "./utils/useBackend";
 import supabase from "./utils/supabaseClient";
 
@@ -95,7 +100,9 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <MainApp session={session} onSignOut={handleSignOut} />
+      <ToastProvider>
+        <MainApp session={session} onSignOut={handleSignOut} />
+      </ToastProvider>
     </ErrorBoundary>
   );
 }
@@ -103,6 +110,7 @@ function App() {
 function MainApp({ session, onSignOut }) {
   // Backend integration
   const backend = useBackend();
+  const toast = useToast();
 
   // User-scoped localStorage key helper
   const userId = session?.user?.id || "anonymous";
@@ -157,6 +165,17 @@ function MainApp({ session, onSignOut }) {
   const [dayNotes, setDayNotes] = useState({});
   const [dayMarked, setDayMarked] = useState({});
 
+  // Block-level notes: { instanceId: "note text" }
+  const [blockNotes, setBlockNotes] = useState({});
+
+  // Undo stack
+  const [undoStack, setUndoStack] = useState([]);
+
+  // Recurring schedule toggle
+  const [recurringEnabled, setRecurringEnabled] = useState(() => {
+    return localStorage.getItem(userKey("recurring-enabled")) === "true";
+  });
+
   const COLORS = [
     "#ef4444",
     "#f97316",
@@ -166,6 +185,13 @@ function MainApp({ session, onSignOut }) {
     "#8b5cf6",
     "#ec4899",
   ];
+
+  // Register service worker for PWA
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
 
   // Theme persistence
   useEffect(() => {
@@ -228,6 +254,31 @@ function MainApp({ session, onSignOut }) {
         );
         if (savedInstances) {
           setDayInstances(JSON.parse(savedInstances));
+        } else if (recurringEnabled) {
+          // Auto-populate from previous week if recurring is enabled
+          const prevWeekDate = new Date(currentWeekStart);
+          prevWeekDate.setDate(prevWeekDate.getDate() - 7);
+          const prevWeekKey = getWeekKey(prevWeekDate);
+          const prevSaved = localStorage.getItem(
+            userKey(`week-instances-${prevWeekKey}`),
+          );
+          if (prevSaved) {
+            const prevInstances = JSON.parse(prevSaved);
+            // Re-key instance IDs so they're unique
+            const copied = {};
+            Object.entries(prevInstances).forEach(([dayIdx, insts]) => {
+              if (Array.isArray(insts)) {
+                copied[dayIdx] = insts.map((inst) => ({
+                  ...inst,
+                  id: `${inst.templateId}-${dayIdx}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                }));
+              }
+            });
+            setDayInstances(copied);
+            toast.info("Recurring schedule applied from last week");
+          } else {
+            setDayInstances({});
+          }
         } else {
           setDayInstances({});
         }
@@ -475,13 +526,12 @@ function MainApp({ session, onSignOut }) {
     setEditingTemplateId(null);
   };
 
-  const deleteTemplate = async (id) => {
-    if (confirm("Delete this commitment template?")) {
-      // Delete from backend
+  const deleteTemplate = (id) => {
+    toast.confirm("Delete this commitment template?", async () => {
+      const deletedTemplate = commitmentTemplates.find((t) => t.id === id);
       await backend.deleteCommitment(id);
 
       setCommitmentTemplates(commitmentTemplates.filter((t) => t.id !== id));
-      // Remove all instances of this template from days
       const newInstances = { ...dayInstances };
       const weekKey = getWeekKey(currentWeekStart);
 
@@ -489,7 +539,6 @@ function MainApp({ session, onSignOut }) {
         const instancesToRemove = newInstances[dayIdx].filter(
           (inst) => inst.templateId === id,
         );
-        // Remove from backend
         instancesToRemove.forEach((inst) => {
           backend
             .removeScheduleInstance(weekKey, dayIdx, inst.id)
@@ -501,7 +550,13 @@ function MainApp({ session, onSignOut }) {
         );
       });
       setDayInstances(newInstances);
-    }
+
+      if (deletedTemplate) {
+        toast.undo(`Deleted "${deletedTemplate.name}"`, () => {
+          setCommitmentTemplates((prev) => [...prev, deletedTemplate]);
+        });
+      }
+    });
   };
 
   const editingTemplate = editingTemplateId
@@ -525,7 +580,16 @@ function MainApp({ session, onSignOut }) {
   };
 
   const removeInstanceFromDay = (dayIdx, instanceId) => {
-    // Also delete from backend
+    // Save for undo
+    const removed = dayInstances[dayIdx]?.find(
+      (inst) => inst.id === instanceId,
+    );
+    const template = removed
+      ? commitmentTemplates.find(
+          (t) => String(t.id) === String(removed.templateId),
+        )
+      : null;
+
     const weekKey = getWeekKey(currentWeekStart);
     backend
       .removeScheduleInstance(weekKey, dayIdx, instanceId)
@@ -537,50 +601,82 @@ function MainApp({ session, onSignOut }) {
       ...prev,
       [dayIdx]: prev[dayIdx].filter((inst) => inst.id !== instanceId),
     }));
+
+    if (removed) {
+      toast.undo(`Removed "${template?.name || "block"}"`, () => {
+        setDayInstances((prev) => ({
+          ...prev,
+          [dayIdx]: [...(prev[dayIdx] || []), removed],
+        }));
+      });
+    }
   };
 
-  const clearWeekSchedule = () => {
-    if (
-      !confirm("Clear ALL commitments from this week? This cannot be undone.")
-    )
-      return;
+  // Block notes management
+  const saveBlockNote = (instanceId, note) => {
+    const newNotes = { ...blockNotes, [instanceId]: note };
+    setBlockNotes(newNotes);
     const weekKey = getWeekKey(currentWeekStart);
+    localStorage.setItem(
+      userKey(`block-notes-${weekKey}`),
+      JSON.stringify(newNotes),
+    );
+  };
 
-    // Delete each instance from backend
-    Object.entries(dayInstances).forEach(([dayIdx, instances]) => {
-      if (Array.isArray(instances)) {
-        instances.forEach((inst) => {
-          backend
-            .removeScheduleInstance(weekKey, dayIdx, inst.id)
-            .catch((err) => console.error("Error clearing instance:", err));
+  // Load block notes when week changes
+  useEffect(() => {
+    const weekKey = getWeekKey(currentWeekStart);
+    const saved = localStorage.getItem(userKey(`block-notes-${weekKey}`));
+    setBlockNotes(saved ? JSON.parse(saved) : {});
+  }, [currentWeekStart]);
+
+  const clearWeekSchedule = () => {
+    toast.confirm(
+      "Clear ALL commitments from this week? This cannot be undone.",
+      () => {
+        const weekKey = getWeekKey(currentWeekStart);
+        const savedInstances = { ...dayInstances };
+        const savedCompleted = { ...completedInstances };
+
+        Object.entries(dayInstances).forEach(([dayIdx, instances]) => {
+          if (Array.isArray(instances)) {
+            instances.forEach((inst) => {
+              backend
+                .removeScheduleInstance(weekKey, dayIdx, inst.id)
+                .catch((err) => console.error("Error clearing instance:", err));
+            });
+          }
         });
-      }
-    });
 
-    // Clear completions from backend for this week
-    Object.entries(completedInstances).forEach(([dayIdx, dayCompleted]) => {
-      if (typeof dayCompleted === "object" && dayCompleted !== null) {
-        Object.keys(dayCompleted).forEach((instanceId) => {
-          backend
-            .markCompletion({
-              id: `completion-${instanceId}-${weekKey}`,
-              instanceId,
-              weekId: weekKey,
-              completed: false,
-              completionTime: null,
-            })
-            .catch((err) => console.error("Error clearing completion:", err));
+        Object.entries(completedInstances).forEach(([dayIdx, dayCompleted]) => {
+          if (typeof dayCompleted === "object" && dayCompleted !== null) {
+            Object.keys(dayCompleted).forEach((instanceId) => {
+              backend
+                .markCompletion({
+                  id: `completion-${instanceId}-${weekKey}`,
+                  instanceId,
+                  weekId: weekKey,
+                  completed: false,
+                  completionTime: null,
+                })
+                .catch((err) =>
+                  console.error("Error clearing completion:", err),
+                );
+            });
+          }
         });
-      }
-    });
 
-    // Clear local state
-    setDayInstances({});
-    setCompletedInstances({});
+        setDayInstances({});
+        setCompletedInstances({});
+        localStorage.removeItem(userKey(`week-instances-${weekKey}`));
+        localStorage.removeItem(userKey(`week-completed-${weekKey}`));
 
-    // Clear localStorage
-    localStorage.removeItem(userKey(`week-instances-${weekKey}`));
-    localStorage.removeItem(userKey(`week-completed-${weekKey}`));
+        toast.undo("Week schedule cleared", () => {
+          setDayInstances(savedInstances);
+          setCompletedInstances(savedCompleted);
+        });
+      },
+    );
   };
 
   const updateInstanceTiming = (
@@ -705,7 +801,9 @@ function MainApp({ session, onSignOut }) {
 
         // Validate structure
         if (!importedData.templates || !importedData.instances) {
-          alert("Invalid file format. Please select a valid schedule export.");
+          toast.error(
+            "Invalid file format. Please select a valid schedule export.",
+          );
           return;
         }
 
@@ -730,9 +828,9 @@ function MainApp({ session, onSignOut }) {
           JSON.stringify(importedData.dayProperties),
         );
 
-        alert("Schedule imported successfully!");
+        toast.success("Schedule imported successfully!");
       } catch (error) {
-        alert("Error reading file: " + error.message);
+        toast.error("Error reading file: " + error.message);
       }
     };
     reader.readAsText(file);
@@ -775,7 +873,8 @@ function MainApp({ session, onSignOut }) {
     try {
       const saved = localStorage.getItem(userKey("training-programs"));
       const programs = saved ? JSON.parse(saved) : [];
-      if (!programs.length) return alert("No training programs to export.");
+      if (!programs.length)
+        return toast.warning("No training programs to export.");
       const blob = new Blob(
         [
           JSON.stringify(
@@ -799,7 +898,7 @@ function MainApp({ session, onSignOut }) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert("Error exporting training programs: " + e.message);
+      toast.error("Error exporting training programs: " + e.message);
     }
   };
 
@@ -811,16 +910,16 @@ function MainApp({ session, onSignOut }) {
         const parsed = JSON.parse(e.target.result);
         const programs = parsed.data || parsed;
         if (!Array.isArray(programs))
-          return alert("Invalid training programs file.");
+          return toast.error("Invalid training programs file.");
         localStorage.setItem(
           userKey("training-programs"),
           JSON.stringify(programs),
         );
-        alert(
-          `Imported ${programs.length} training program(s)! Refresh or revisit Training Studio to see them.`,
+        toast.success(
+          `Imported ${programs.length} training program(s)! Revisit Training Studio to see them.`,
         );
       } catch (err) {
-        alert("Error reading file: " + err.message);
+        toast.error("Error reading file: " + err.message);
       }
     };
     reader.readAsText(file);
@@ -831,7 +930,7 @@ function MainApp({ session, onSignOut }) {
     try {
       const saved = localStorage.getItem(userKey("content-plans"));
       const plans = saved ? JSON.parse(saved) : [];
-      if (!plans.length) return alert("No content plans to export.");
+      if (!plans.length) return toast.warning("No content plans to export.");
       const blob = new Blob(
         [
           JSON.stringify(
@@ -855,7 +954,7 @@ function MainApp({ session, onSignOut }) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert("Error exporting content plans: " + e.message);
+      toast.error("Error exporting content plans: " + e.message);
     }
   };
 
@@ -866,13 +965,14 @@ function MainApp({ session, onSignOut }) {
       try {
         const parsed = JSON.parse(e.target.result);
         const plans = parsed.data || parsed;
-        if (!Array.isArray(plans)) return alert("Invalid content plans file.");
+        if (!Array.isArray(plans))
+          return toast.error("Invalid content plans file.");
         localStorage.setItem(userKey("content-plans"), JSON.stringify(plans));
-        alert(
-          `Imported ${plans.length} content plan(s)! Refresh or revisit Content Studio to see them.`,
+        toast.success(
+          `Imported ${plans.length} content plan(s)! Revisit Content Studio to see them.`,
         );
       } catch (err) {
-        alert("Error reading file: " + err.message);
+        toast.error("Error reading file: " + err.message);
       }
     };
     reader.readAsText(file);
@@ -880,7 +980,8 @@ function MainApp({ session, onSignOut }) {
 
   // ─── Export templates only ───
   const exportTemplates = () => {
-    if (!commitmentTemplates.length) return alert("No templates to export.");
+    if (!commitmentTemplates.length)
+      return toast.warning("No templates to export.");
     const blob = new Blob(
       [
         JSON.stringify(
@@ -912,7 +1013,8 @@ function MainApp({ session, onSignOut }) {
       try {
         const parsed = JSON.parse(e.target.result);
         const templates = parsed.data || parsed;
-        if (!Array.isArray(templates)) return alert("Invalid templates file.");
+        if (!Array.isArray(templates))
+          return toast.error("Invalid templates file.");
         setCommitmentTemplates((prev) => {
           const merged = [...prev];
           templates.forEach((t) => {
@@ -921,9 +1023,9 @@ function MainApp({ session, onSignOut }) {
           });
           return merged;
         });
-        alert(`Imported ${templates.length} template(s)!`);
+        toast.success(`Imported ${templates.length} template(s)!`);
       } catch (err) {
-        alert("Error reading file: " + err.message);
+        toast.error("Error reading file: " + err.message);
       }
     };
     reader.readAsText(file);
@@ -961,7 +1063,7 @@ function MainApp({ session, onSignOut }) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      alert("Error creating backup: " + e.message);
+      toast.error("Error creating backup: " + e.message);
     }
   };
 
@@ -971,59 +1073,64 @@ function MainApp({ session, onSignOut }) {
     reader.onload = (e) => {
       try {
         const backup = JSON.parse(e.target.result);
-        if (backup.type !== "full-backup")
-          return alert(
+        if (backup.type !== "full-backup") {
+          toast.error(
             "Invalid backup file. Please select a full backup export.",
           );
-        if (!confirm("This will overwrite your current data. Continue?"))
           return;
-
-        // Schedule
-        if (backup.schedule) {
-          setCommitmentTemplates(backup.schedule.templates || []);
-          setDayInstances(backup.schedule.instances || {});
-          setDayProperties(backup.schedule.dayProperties || {});
-          localStorage.setItem(
-            userKey("commitment-templates"),
-            JSON.stringify(backup.schedule.templates || []),
-          );
-          const wk = backup.schedule.weekKey || getWeekKey(currentWeekStart);
-          localStorage.setItem(
-            userKey(`week-instances-${wk}`),
-            JSON.stringify(backup.schedule.instances || {}),
-          );
-          localStorage.setItem(
-            userKey(`week-dayprops-${wk}`),
-            JSON.stringify(backup.schedule.dayProperties || {}),
-          );
         }
-        // Training
-        if (backup.trainingPrograms)
-          localStorage.setItem(
-            userKey("training-programs"),
-            JSON.stringify(backup.trainingPrograms),
-          );
-        if (backup.trainingLog)
-          localStorage.setItem(
-            userKey("training-log"),
-            JSON.stringify(backup.trainingLog),
-          );
-        // Content
-        if (backup.contentPlans)
-          localStorage.setItem(
-            userKey("content-plans"),
-            JSON.stringify(backup.contentPlans),
-          );
-        // Body
-        if (backup.bodyTracking)
-          localStorage.setItem(
-            userKey("body-measurements"),
-            JSON.stringify(backup.bodyTracking),
-          );
+        toast.confirm(
+          "This will overwrite your current data. Continue?",
+          () => {
+            // Schedule
+            if (backup.schedule) {
+              setCommitmentTemplates(backup.schedule.templates || []);
+              setDayInstances(backup.schedule.instances || {});
+              setDayProperties(backup.schedule.dayProperties || {});
+              localStorage.setItem(
+                userKey("commitment-templates"),
+                JSON.stringify(backup.schedule.templates || []),
+              );
+              const wk =
+                backup.schedule.weekKey || getWeekKey(currentWeekStart);
+              localStorage.setItem(
+                userKey(`week-instances-${wk}`),
+                JSON.stringify(backup.schedule.instances || {}),
+              );
+              localStorage.setItem(
+                userKey(`week-dayprops-${wk}`),
+                JSON.stringify(backup.schedule.dayProperties || {}),
+              );
+            }
+            // Training
+            if (backup.trainingPrograms)
+              localStorage.setItem(
+                userKey("training-programs"),
+                JSON.stringify(backup.trainingPrograms),
+              );
+            if (backup.trainingLog)
+              localStorage.setItem(
+                userKey("training-log"),
+                JSON.stringify(backup.trainingLog),
+              );
+            // Content
+            if (backup.contentPlans)
+              localStorage.setItem(
+                userKey("content-plans"),
+                JSON.stringify(backup.contentPlans),
+              );
+            // Body
+            if (backup.bodyTracking)
+              localStorage.setItem(
+                userKey("body-measurements"),
+                JSON.stringify(backup.bodyTracking),
+              );
 
-        alert("Full backup restored successfully! Refresh to see all changes.");
+            toast.success("Full backup restored! Refresh to see all changes.");
+          },
+        );
       } catch (err) {
-        alert("Error restoring backup: " + err.message);
+        toast.error("Error restoring backup: " + err.message);
       }
     };
     reader.readAsText(file);
@@ -1070,7 +1177,7 @@ function MainApp({ session, onSignOut }) {
   // ─── PDF helper (generates printable HTML that triggers print dialog) ───
   const exportAsPDF = (title, htmlContent) => {
     const win = window.open("", "_blank");
-    if (!win) return alert("Please allow popups to export as PDF.");
+    if (!win) return toast.warning("Please allow popups to export as PDF.");
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 900px; margin: 0 auto; }
@@ -1130,7 +1237,7 @@ function MainApp({ session, onSignOut }) {
         ]);
       });
     });
-    if (!rows.length) return alert("No schedule data to export.");
+    if (!rows.length) return toast.warning("No schedule data to export.");
     downloadFile(
       arrayToCSV(headers, rows),
       `schedule-${getWeekKey(currentWeekStart)}.csv`,
@@ -1346,7 +1453,8 @@ function MainApp({ session, onSignOut }) {
       const programs = JSON.parse(
         localStorage.getItem(userKey("training-programs")) || "[]",
       );
-      if (!programs.length) return alert("No training programs to export.");
+      if (!programs.length)
+        return toast.warning("No training programs to export.");
       const headers = [
         "Program",
         "Day Name",
@@ -1376,7 +1484,7 @@ function MainApp({ session, onSignOut }) {
         "text/csv",
       );
     } catch (e) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     }
   };
 
@@ -1386,7 +1494,7 @@ function MainApp({ session, onSignOut }) {
       const plans = JSON.parse(
         localStorage.getItem(userKey("content-plans")) || "[]",
       );
-      if (!plans.length) return alert("No content plans to export.");
+      if (!plans.length) return toast.warning("No content plans to export.");
       const headers = [
         "Plan",
         "Day",
@@ -1415,13 +1523,14 @@ function MainApp({ session, onSignOut }) {
       });
       downloadFile(arrayToCSV(headers, rows), "content-plans.csv", "text/csv");
     } catch (e) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     }
   };
 
   // ─── Export Templates as CSV ───
   const exportTemplatesCSV = () => {
-    if (!commitmentTemplates.length) return alert("No templates to export.");
+    if (!commitmentTemplates.length)
+      return toast.warning("No templates to export.");
     const headers = [
       "Name",
       "Description",
@@ -1530,6 +1639,13 @@ function MainApp({ session, onSignOut }) {
                   <i className="fa-solid fa-moon"></i>
                 )}
               </button>
+
+              {/* Search button */}
+              <GlobalSearch
+                commitmentTemplates={commitmentTemplates}
+                userId={userId}
+                onNavigate={(view) => setCurrentView(view)}
+              />
 
               {/* Profile button */}
               <button
@@ -1825,6 +1941,32 @@ function MainApp({ session, onSignOut }) {
                         <i className="fa-solid fa-broom text-red-400 w-4 text-center"></i>
                         Clear Week Schedule
                       </button>
+                      <button
+                        onClick={() => {
+                          setRecurringEnabled(!recurringEnabled);
+                          localStorage.setItem(
+                            userKey("recurring-enabled"),
+                            JSON.stringify(!recurringEnabled),
+                          );
+                          toast.info(
+                            recurringEnabled
+                              ? "Recurring schedule disabled"
+                              : "Recurring schedule enabled — empty weeks will copy from the previous week",
+                          );
+                          setShowOptionsMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 text-slate-700 dark:text-slate-300 transition"
+                      >
+                        <i
+                          className={`fa-solid fa-repeat w-4 text-center ${recurringEnabled ? "text-green-500" : "text-slate-400"}`}
+                        ></i>
+                        Repeat Weekly
+                        {recurringEnabled && (
+                          <span className="ml-auto text-[10px] text-green-500 font-bold">
+                            ON
+                          </span>
+                        )}
+                      </button>
 
                       <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
 
@@ -1874,6 +2016,21 @@ function MainApp({ session, onSignOut }) {
           {/* VIEW: TIMETABLE */}
           {currentView === "timetable" && (
             <>
+              {/* Onboarding Guide for new users */}
+              <OnboardingGuide
+                commitmentTemplates={commitmentTemplates}
+                dayInstances={dayInstances}
+                completedInstances={completedInstances}
+                onCreateTemplate={openAddTemplateModal}
+              />
+
+              {/* Reminders */}
+              <ReminderSystem
+                dayInstances={dayInstances}
+                commitmentTemplates={commitmentTemplates}
+                currentWeekStart={currentWeekStart}
+              />
+
               {/* Weekly Calendar */}
               <WeeklyCalendar
                 dayInstances={dayInstances}
@@ -1897,6 +2054,15 @@ function MainApp({ session, onSignOut }) {
                 onDropZone={addInstanceViaDropZone}
                 draggedTemplate={draggedTemplate}
                 onOpenDayView={(dayIdx) => setSelectedDayIdx(dayIdx)}
+              />
+
+              {/* Goals Panel */}
+              <GoalsPanel
+                dayInstances={dayInstances}
+                completedInstances={completedInstances}
+                commitmentTemplates={commitmentTemplates}
+                userId={userId}
+                toast={toast}
               />
 
               {/* Dashboard */}
@@ -1966,12 +2132,22 @@ function MainApp({ session, onSignOut }) {
 
           {/* VIEW: STATS */}
           {currentView === "stats" && (
-            <StatsView
-              dayInstances={dayInstances}
-              completedInstances={completedInstances}
-              commitmentTemplates={commitmentTemplates}
-              userId={userId}
-            />
+            <>
+              <StatsView
+                dayInstances={dayInstances}
+                completedInstances={completedInstances}
+                commitmentTemplates={commitmentTemplates}
+                userId={userId}
+              />
+
+              {/* Habit Streaks */}
+              <HabitStreaks
+                dayInstances={dayInstances}
+                completedInstances={completedInstances}
+                commitmentTemplates={commitmentTemplates}
+                userId={userId}
+              />
+            </>
           )}
         </div>
       </div>
