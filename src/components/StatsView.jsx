@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import useBackend from "../utils/useBackend";
 
-function StatsView({ dayInstances, completedInstances, commitmentTemplates }) {
+function StatsView({
+  dayInstances,
+  completedInstances,
+  commitmentTemplates,
+  userId,
+}) {
   const backend = useBackend();
+  const userKey = (key) => `${userId || "anonymous"}:${key}`;
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const [gymLogs, setGymLogs] = useState([]);
   const [contentRoadmap, setContentRoadmap] = useState([]);
@@ -15,10 +21,10 @@ function StatsView({ dayInstances, completedInstances, commitmentTemplates }) {
 
   const loadStatsData = async () => {
     try {
-      const savedGym = localStorage.getItem("training-log");
+      const savedGym = localStorage.getItem(userKey("training-log"));
       if (savedGym) setGymLogs(JSON.parse(savedGym));
 
-      const savedContent = localStorage.getItem("content-roadmap");
+      const savedContent = localStorage.getItem(userKey("content-roadmap"));
       if (savedContent) setContentRoadmap(JSON.parse(savedContent));
 
       // Load weekly stats from backend

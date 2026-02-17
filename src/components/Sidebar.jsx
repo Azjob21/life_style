@@ -1,15 +1,47 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 function Sidebar({
   templates,
+  dayInstances,
   onAddTemplate,
   onEditTemplate,
   onDeleteTemplate,
   onDragStart,
 }) {
-  const highPriority = templates.filter((t) => t.priority === "high");
-  const mediumPriority = templates.filter((t) => t.priority === "medium");
-  const lowPriority = templates.filter((t) => t.priority === "low");
+  // Determine which training template IDs are already scheduled this week
+  const scheduledTemplateIds = useMemo(() => {
+    const ids = new Set();
+    Object.values(dayInstances || {}).forEach((instances) => {
+      if (Array.isArray(instances)) {
+        instances.forEach((inst) => ids.add(inst.templateId));
+      }
+    });
+    return ids;
+  }, [dayInstances]);
+
+  // Split templates: non-training always show, training only if not consumed
+  const availableTemplates = useMemo(() => {
+    return templates.filter((t) => {
+      if (t.category === "training") {
+        // Training templates are consumable — hide if already scheduled
+        return !scheduledTemplateIds.has(t.id);
+      }
+      return true; // non-training always visible
+    });
+  }, [templates, scheduledTemplateIds]);
+
+  // Training templates that ARE scheduled (consumed) — show grayed out
+  const consumedTrainingTemplates = useMemo(() => {
+    return templates.filter(
+      (t) => t.category === "training" && scheduledTemplateIds.has(t.id),
+    );
+  }, [templates, scheduledTemplateIds]);
+
+  const highPriority = availableTemplates.filter((t) => t.priority === "high");
+  const mediumPriority = availableTemplates.filter(
+    (t) => t.priority === "medium",
+  );
+  const lowPriority = availableTemplates.filter((t) => t.priority === "low");
 
   const TemplateButton = ({ template }) => (
     <div
@@ -85,7 +117,7 @@ function Sidebar({
               Total:
             </span>
             <span className="text-xl font-bold text-purple-500 dark:text-amber-500">
-              {templates.length}
+              {availableTemplates.length}
             </span>
           </div>
           {highPriority.length > 0 && (
@@ -119,7 +151,8 @@ function Sidebar({
         </p>
 
         <div className="space-y-4">
-          {templates.length === 0 ? (
+          {availableTemplates.length === 0 &&
+          consumedTrainingTemplates.length === 0 ? (
             <p className="text-xs text-slate-500 italic">
               Create commitment templates to get started
             </p>
@@ -159,6 +192,44 @@ function Sidebar({
                   <div className="space-y-2">
                     {lowPriority.map((t) => (
                       <TemplateButton key={t.id} template={t} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Consumed Training Blocks */}
+              {consumedTrainingTemplates.length > 0 && (
+                <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-800">
+                  <p className="text-xs text-slate-400 dark:text-slate-600 font-semibold mb-2 flex items-center gap-1">
+                    <i className="fa-solid fa-check-double"></i>Scheduled This
+                    Week
+                  </p>
+                  <div className="space-y-2">
+                    {consumedTrainingTemplates.map((t) => (
+                      <div
+                        key={t.id}
+                        className="commitment-tag w-full text-left opacity-40 cursor-not-allowed"
+                        style={{
+                          background: `${t.color}10`,
+                          borderWidth: "2px",
+                          borderColor: `${t.color}40`,
+                          color: `${t.color}80`,
+                        }}
+                        title={`Already scheduled: ${t.name}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="flex-1 truncate text-sm line-through">
+                            <i className="fa-solid fa-calendar-check text-xs opacity-50 mr-1"></i>
+                            {t.name}
+                          </span>
+                          <span className="text-[9px] bg-green-500/20 text-green-500 px-1.5 py-0.5 rounded font-bold">
+                            ✓ Used
+                          </span>
+                        </div>
+                        <div className="text-xs opacity-60 mt-1">
+                          {t.startTime} - {t.endTime}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>

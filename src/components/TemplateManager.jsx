@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-function TemplateManager({ onClose, currentCommitments, onLoadTemplate }) {
+function TemplateManager({
+  onClose,
+  currentCommitments,
+  onLoadTemplate,
+  userId,
+}) {
+  const userKey = (key) => `${userId || "anonymous"}:${key}`;
   const [templates, setTemplates] = useState([]);
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [templateName, setTemplateName] = useState("");
@@ -10,7 +16,7 @@ function TemplateManager({ onClose, currentCommitments, onLoadTemplate }) {
   }, []);
 
   const loadTemplates = () => {
-    const saved = localStorage.getItem("templates");
+    const saved = localStorage.getItem(userKey("templates"));
     if (saved) {
       setTemplates(JSON.parse(saved));
     }
@@ -38,7 +44,10 @@ function TemplateManager({ onClose, currentCommitments, onLoadTemplate }) {
     };
 
     const updatedTemplates = [...templates, newTemplate];
-    localStorage.setItem("templates", JSON.stringify(updatedTemplates));
+    localStorage.setItem(
+      userKey("templates"),
+      JSON.stringify(updatedTemplates),
+    );
     setTemplates(updatedTemplates);
     setTemplateName("");
     setShowSaveForm(false);
@@ -46,7 +55,10 @@ function TemplateManager({ onClose, currentCommitments, onLoadTemplate }) {
 
   const deleteTemplate = (id) => {
     const updatedTemplates = templates.filter((t) => t.id !== id);
-    localStorage.setItem("templates", JSON.stringify(updatedTemplates));
+    localStorage.setItem(
+      userKey("templates"),
+      JSON.stringify(updatedTemplates),
+    );
     setTemplates(updatedTemplates);
   };
 

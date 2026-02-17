@@ -91,9 +91,12 @@ const EXERCISE_PRESETS = {
 function TrainingView({
   commitmentTemplates,
   onCreateCommitment,
+  onApplyToSchedule,
   dayInstances,
   completedInstances,
+  userId,
 }) {
+  const userKey = (key) => `${userId || "anonymous"}:${key}`;
   // ─── State ───
   const [programs, setPrograms] = useState([]);
   const [showProgramBuilder, setShowProgramBuilder] = useState(false);
@@ -118,9 +121,9 @@ function TrainingView({
   // Load from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("training-programs");
+      const saved = localStorage.getItem(userKey("training-programs"));
       if (saved) setPrograms(JSON.parse(saved));
-      const savedLogs = localStorage.getItem("physical-logs");
+      const savedLogs = localStorage.getItem(userKey("physical-logs"));
       if (savedLogs) setPhysicalLogs(JSON.parse(savedLogs));
     } catch (e) {
       console.error("Error loading training data:", e);
@@ -129,10 +132,16 @@ function TrainingView({
 
   // Persist
   useEffect(() => {
-    localStorage.setItem("training-programs", JSON.stringify(programs));
+    localStorage.setItem(
+      userKey("training-programs"),
+      JSON.stringify(programs),
+    );
   }, [programs]);
   useEffect(() => {
-    localStorage.setItem("physical-logs", JSON.stringify(physicalLogs));
+    localStorage.setItem(
+      userKey("physical-logs"),
+      JSON.stringify(physicalLogs),
+    );
   }, [physicalLogs]);
 
   // ═══════════════════════════════════════════════
@@ -835,16 +844,17 @@ function TrainingView({
       });
 
       // Scan localStorage for all week-instances-* keys
+      const userPrefix = `${userId || "anonymous"}:`;
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (!key || !key.startsWith("week-instances-")) continue;
-        const weekKey = key.replace("week-instances-", "");
+        if (!key || !key.startsWith(userPrefix + "week-instances-")) continue;
+        const weekKey = key.replace(userPrefix + "week-instances-", "");
         let weekInstances = {};
         let weekCompleted = {};
         try {
           weekInstances = JSON.parse(localStorage.getItem(key) || "{}");
           weekCompleted = JSON.parse(
-            localStorage.getItem(`week-completed-${weekKey}`) || "{}",
+            localStorage.getItem(userKey(`week-completed-${weekKey}`)) || "{}",
           );
         } catch (e) {
           continue;
@@ -962,6 +972,51 @@ function TrainingView({
             </div>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => {
+                if (!onApplyToSchedule) return;
+                const instances = prog.days.map((day, idx) => ({
+                  templateId: `training-${prog.id}-day-${idx}`,
+                  dayIndex: idx < 7 ? idx : idx % 7,
+                  startTime: prog.startTime || "08:00",
+                  endTime: prog.endTime || "09:00",
+                }));
+                // First ensure templates exist
+                if (onCreateCommitment) {
+                  prog.days.forEach((day, idx) => {
+                    const templateId = `training-${prog.id}-day-${idx}`;
+                    const exists = (commitmentTemplates || []).find(
+                      (t) => String(t.id) === String(templateId),
+                    );
+                    if (!exists) {
+                      const exerciseList = day.exercises
+                        .map((ex) => `• ${ex.name} → ${ex.sets}×${ex.reps}`)
+                        .join("\n");
+                      onCreateCommitment({
+                        id: templateId,
+                        name: `🏋️ ${prog.name} — ${day.label}`,
+                        description: `🏋️ ${prog.name} — ${day.label}\n${(day.muscleGroups || []).join(", ")}\n\n${exerciseList}`,
+                        color: prog.color,
+                        priority: "high",
+                        startTime: prog.startTime,
+                        endTime: prog.endTime,
+                        category: "training",
+                        icon:
+                          prog.type === "gym"
+                            ? "fa-dumbbell"
+                            : "fa-person-running",
+                        sourceProgram: prog.id,
+                      });
+                    }
+                  });
+                }
+                onApplyToSchedule(instances);
+              }}
+              className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition"
+            >
+              <i className="fa-solid fa-calendar-plus mr-1"></i>Apply to
+              Schedule
+            </button>
             <button
               onClick={() => openBuilder(prog)}
               className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition"

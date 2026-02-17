@@ -19,10 +19,17 @@ export const useBackend = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [useDatabase, setUseDatabase] = useState(isSupabaseConfigured());
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState("anonymous");
+
+  const userKey = useCallback((key) => `${userId}:${key}`, [userId]);
 
   useEffect(() => {
     setUseDatabase(isSupabaseConfigured());
     setIsInitialized(true);
+    // Get userId from Supabase session
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session?.user?.id) setUserId(data.session.user.id);
+    });
   }, []);
 
   // Get week ID from date
@@ -45,7 +52,7 @@ export const useBackend = () => {
           }
           return result;
         } else {
-          const key = "commitment-templates";
+          const key = userKey("commitment-templates");
           const existing = JSON.parse(localStorage.getItem(key) || "[]");
           const updated = [
             ...existing.filter((c) => c.id !== commitment.id),
@@ -74,7 +81,9 @@ export const useBackend = () => {
           return [];
         }
       } else {
-        return JSON.parse(localStorage.getItem("commitment-templates") || "[]");
+        return JSON.parse(
+          localStorage.getItem(userKey("commitment-templates")) || "[]",
+        );
       }
     } catch (error) {
       console.error("Error getting commitments:", error);
@@ -88,7 +97,7 @@ export const useBackend = () => {
         if (useDatabase) {
           return await SupabaseDatabaseAPI.deleteCommitment(id);
         } else {
-          const key = "commitment-templates";
+          const key = userKey("commitment-templates");
           const existing = JSON.parse(localStorage.getItem(key) || "[]");
           const updated = existing.filter((c) => c.id !== id);
           localStorage.setItem(key, JSON.stringify(updated));
@@ -114,7 +123,7 @@ export const useBackend = () => {
           return result;
         } else {
           const weekId = instance.weekId;
-          const key = `week-instances-${weekId}`;
+          const key = userKey(`week-instances-${weekId}`);
           const existing = JSON.parse(localStorage.getItem(key) || "{}");
           const dayIdx = instance.dayIndex;
           existing[dayIdx] = [...(existing[dayIdx] || []), instance];
@@ -139,7 +148,7 @@ export const useBackend = () => {
           return [];
         } else {
           const existing = JSON.parse(
-            localStorage.getItem(`week-instances-${weekId}`) || "{}",
+            localStorage.getItem(userKey(`week-instances-${weekId}`)) || "{}",
           );
           const instances = [];
           Object.values(existing).forEach((dayInstances) => {
@@ -161,7 +170,7 @@ export const useBackend = () => {
         if (useDatabase) {
           return await SupabaseDatabaseAPI.deleteScheduleInstance(instanceId);
         } else {
-          const key = `week-instances-${weekId}`;
+          const key = userKey(`week-instances-${weekId}`);
           const existing = JSON.parse(localStorage.getItem(key) || "{}");
           if (existing[dayIdx]) {
             existing[dayIdx] = existing[dayIdx].filter(
@@ -190,7 +199,7 @@ export const useBackend = () => {
           return result;
         } else {
           const weekId = completion.weekId;
-          const key = `week-completed-${weekId}`;
+          const key = userKey(`week-completed-${weekId}`);
           const existing = JSON.parse(localStorage.getItem(key) || "{}");
           existing[completion.instanceId] = completion.completed;
           localStorage.setItem(key, JSON.stringify(existing));
@@ -235,7 +244,7 @@ export const useBackend = () => {
             props,
           );
         } else {
-          const key = `week-dayprops-${weekId}`;
+          const key = userKey(`week-dayprops-${weekId}`);
           const existing = JSON.parse(localStorage.getItem(key) || "{}");
           existing[dayIndex] = props;
           localStorage.setItem(key, JSON.stringify(existing));
@@ -258,7 +267,7 @@ export const useBackend = () => {
           return {};
         } else {
           return JSON.parse(
-            localStorage.getItem(`week-dayprops-${weekId}`) || "{}",
+            localStorage.getItem(userKey(`week-dayprops-${weekId}`)) || "{}",
           );
         }
       } catch (error) {
@@ -281,7 +290,7 @@ export const useBackend = () => {
             isMarked,
           );
         } else {
-          const key = `week-marked-${weekId}`;
+          const key = userKey(`week-marked-${weekId}`);
           const existing = JSON.parse(localStorage.getItem(key) || "{}");
           existing[dayIndex] = isMarked;
           localStorage.setItem(key, JSON.stringify(existing));
@@ -304,7 +313,7 @@ export const useBackend = () => {
           return {};
         } else {
           return JSON.parse(
-            localStorage.getItem(`week-marked-${weekId}`) || "{}",
+            localStorage.getItem(userKey(`week-marked-${weekId}`)) || "{}",
           );
         }
       } catch (error) {
@@ -433,7 +442,7 @@ export const useBackend = () => {
             notes: note,
           });
         } else {
-          const key = `week-notes-${weekId}`;
+          const key = userKey(`week-notes-${weekId}`);
           const existing = JSON.parse(localStorage.getItem(key) || "{}");
           existing[dayIndex] = note;
           localStorage.setItem(key, JSON.stringify(existing));
@@ -462,7 +471,7 @@ export const useBackend = () => {
           return {};
         } else {
           return JSON.parse(
-            localStorage.getItem(`week-notes-${weekId}`) || "{}",
+            localStorage.getItem(userKey(`week-notes-${weekId}`)) || "{}",
           );
         }
       } catch (error) {

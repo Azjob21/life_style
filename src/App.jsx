@@ -104,6 +104,10 @@ function MainApp({ session, onSignOut }) {
   // Backend integration
   const backend = useBackend();
 
+  // User-scoped localStorage key helper
+  const userId = session?.user?.id || "anonymous";
+  const userKey = (key) => `${userId}:${key}`;
+
   // Theme state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("theme-mode");
@@ -196,7 +200,9 @@ function MainApp({ session, onSignOut }) {
         setCommitmentTemplates(templates);
       } else {
         // Fallback to localStorage
-        const savedTemplates = localStorage.getItem("commitment-templates");
+        const savedTemplates = localStorage.getItem(
+          userKey("commitment-templates"),
+        );
         if (savedTemplates) {
           setCommitmentTemplates(JSON.parse(savedTemplates));
         }
@@ -218,7 +224,7 @@ function MainApp({ session, onSignOut }) {
       } else {
         // Fallback to localStorage
         const savedInstances = localStorage.getItem(
-          `week-instances-${weekKey}`,
+          userKey(`week-instances-${weekKey}`),
         );
         if (savedInstances) {
           setDayInstances(JSON.parse(savedInstances));
@@ -239,7 +245,9 @@ function MainApp({ session, onSignOut }) {
           setDayProperties(merged);
         }
       } else {
-        const savedDayProps = localStorage.getItem(`week-dayprops-${weekKey}`);
+        const savedDayProps = localStorage.getItem(
+          userKey(`week-dayprops-${weekKey}`),
+        );
         if (savedDayProps) {
           setDayProperties(JSON.parse(savedDayProps));
         }
@@ -257,7 +265,7 @@ function MainApp({ session, onSignOut }) {
       } else {
         // Fallback to localStorage
         const savedCompleted = localStorage.getItem(
-          `week-completed-${weekKey}`,
+          userKey(`week-completed-${weekKey}`),
         );
         if (savedCompleted) {
           setCompletedInstances(JSON.parse(savedCompleted));
@@ -271,7 +279,9 @@ function MainApp({ session, onSignOut }) {
         const notes = await backend.getWeeklyNotes(weekKey);
         setDayNotes(notes || {});
       } else {
-        const savedNotes = localStorage.getItem(`week-notes-${weekKey}`);
+        const savedNotes = localStorage.getItem(
+          userKey(`week-notes-${weekKey}`),
+        );
         setDayNotes(savedNotes ? JSON.parse(savedNotes) : {});
       }
 
@@ -280,7 +290,9 @@ function MainApp({ session, onSignOut }) {
         const marked = await backend.getDayMarked(weekKey);
         setDayMarked(marked || {});
       } else {
-        const savedMarked = localStorage.getItem(`week-marked-${weekKey}`);
+        const savedMarked = localStorage.getItem(
+          userKey(`week-marked-${weekKey}`),
+        );
         setDayMarked(savedMarked ? JSON.parse(savedMarked) : {});
       }
 
@@ -314,7 +326,10 @@ function MainApp({ session, onSignOut }) {
     await backend.saveDailyNote(weekKey, dayIdx, note);
 
     // Save to localStorage fallback
-    localStorage.setItem(`week-notes-${weekKey}`, JSON.stringify(newNotes));
+    localStorage.setItem(
+      userKey(`week-notes-${weekKey}`),
+      JSON.stringify(newNotes),
+    );
   };
 
   const toggleDayStatus = (dayIdx) => {
@@ -329,7 +344,10 @@ function MainApp({ session, onSignOut }) {
         .saveDayMarked(weekKey, dayIdx, newValue)
         .catch((err) => console.error("Error saving day marked:", err));
     }
-    localStorage.setItem(`week-marked-${weekKey}`, JSON.stringify(newMarked));
+    localStorage.setItem(
+      userKey(`week-marked-${weekKey}`),
+      JSON.stringify(newMarked),
+    );
   };
 
   // Save templates to backend + localStorage
@@ -344,7 +362,7 @@ function MainApp({ session, onSignOut }) {
     }
     // Save to localStorage fallback
     localStorage.setItem(
-      "commitment-templates",
+      userKey("commitment-templates"),
       JSON.stringify(commitmentTemplates),
     );
   }, [commitmentTemplates]);
@@ -372,15 +390,15 @@ function MainApp({ session, onSignOut }) {
 
     // Save to localStorage fallback
     localStorage.setItem(
-      `week-instances-${weekKey}`,
+      userKey(`week-instances-${weekKey}`),
       JSON.stringify(dayInstances),
     );
     localStorage.setItem(
-      `week-dayprops-${weekKey}`,
+      userKey(`week-dayprops-${weekKey}`),
       JSON.stringify(dayProperties),
     );
     localStorage.setItem(
-      `week-completed-${weekKey}`,
+      userKey(`week-completed-${weekKey}`),
       JSON.stringify(completedInstances),
     );
   }, [dayInstances, dayProperties, completedInstances, currentWeekStart]);
@@ -507,10 +525,62 @@ function MainApp({ session, onSignOut }) {
   };
 
   const removeInstanceFromDay = (dayIdx, instanceId) => {
+    // Also delete from backend
+    const weekKey = getWeekKey(currentWeekStart);
+    backend
+      .removeScheduleInstance(weekKey, dayIdx, instanceId)
+      .catch((err) =>
+        console.error("Error removing instance from backend:", err),
+      );
+
     setDayInstances((prev) => ({
       ...prev,
       [dayIdx]: prev[dayIdx].filter((inst) => inst.id !== instanceId),
     }));
+  };
+
+  const clearWeekSchedule = () => {
+    if (
+      !confirm("Clear ALL commitments from this week? This cannot be undone.")
+    )
+      return;
+    const weekKey = getWeekKey(currentWeekStart);
+
+    // Delete each instance from backend
+    Object.entries(dayInstances).forEach(([dayIdx, instances]) => {
+      if (Array.isArray(instances)) {
+        instances.forEach((inst) => {
+          backend
+            .removeScheduleInstance(weekKey, dayIdx, inst.id)
+            .catch((err) => console.error("Error clearing instance:", err));
+        });
+      }
+    });
+
+    // Clear completions from backend for this week
+    Object.entries(completedInstances).forEach(([dayIdx, dayCompleted]) => {
+      if (typeof dayCompleted === "object" && dayCompleted !== null) {
+        Object.keys(dayCompleted).forEach((instanceId) => {
+          backend
+            .markCompletion({
+              id: `completion-${instanceId}-${weekKey}`,
+              instanceId,
+              weekId: weekKey,
+              completed: false,
+              completionTime: null,
+            })
+            .catch((err) => console.error("Error clearing completion:", err));
+        });
+      }
+    });
+
+    // Clear local state
+    setDayInstances({});
+    setCompletedInstances({});
+
+    // Clear localStorage
+    localStorage.removeItem(userKey(`week-instances-${weekKey}`));
+    localStorage.removeItem(userKey(`week-completed-${weekKey}`));
   };
 
   const updateInstanceTiming = (
@@ -646,17 +716,17 @@ function MainApp({ session, onSignOut }) {
 
         // Save to localStorage
         localStorage.setItem(
-          "commitment-templates",
+          userKey("commitment-templates"),
           JSON.stringify(importedData.templates),
         );
         const weekKey =
           importedData.weekKey || getWeekKey(new Date(importedData.weekStart));
         localStorage.setItem(
-          `week-instances-${weekKey}`,
+          userKey(`week-instances-${weekKey}`),
           JSON.stringify(importedData.instances),
         );
         localStorage.setItem(
-          `week-dayprops-${weekKey}`,
+          userKey(`week-dayprops-${weekKey}`),
           JSON.stringify(importedData.dayProperties),
         );
 
@@ -676,16 +746,16 @@ function MainApp({ session, onSignOut }) {
 
     // Save to localStorage
     localStorage.setItem(
-      "commitment-templates",
+      userKey("commitment-templates"),
       JSON.stringify(data.templates),
     );
     const weekKey = data.weekKey || getWeekKey(new Date(data.weekStart));
     localStorage.setItem(
-      `week-instances-${weekKey}`,
+      userKey(`week-instances-${weekKey}`),
       JSON.stringify(data.instances),
     );
     localStorage.setItem(
-      `week-dayprops-${weekKey}`,
+      userKey(`week-dayprops-${weekKey}`),
       JSON.stringify(data.dayProperties),
     );
   };
@@ -703,7 +773,7 @@ function MainApp({ session, onSignOut }) {
   // ─── Export training programs ───
   const exportTrainingPrograms = () => {
     try {
-      const saved = localStorage.getItem("training-programs");
+      const saved = localStorage.getItem(userKey("training-programs"));
       const programs = saved ? JSON.parse(saved) : [];
       if (!programs.length) return alert("No training programs to export.");
       const blob = new Blob(
@@ -742,7 +812,10 @@ function MainApp({ session, onSignOut }) {
         const programs = parsed.data || parsed;
         if (!Array.isArray(programs))
           return alert("Invalid training programs file.");
-        localStorage.setItem("training-programs", JSON.stringify(programs));
+        localStorage.setItem(
+          userKey("training-programs"),
+          JSON.stringify(programs),
+        );
         alert(
           `Imported ${programs.length} training program(s)! Refresh or revisit Training Studio to see them.`,
         );
@@ -756,7 +829,7 @@ function MainApp({ session, onSignOut }) {
   // ─── Export content plans ───
   const exportContentPlans = () => {
     try {
-      const saved = localStorage.getItem("content-plans");
+      const saved = localStorage.getItem(userKey("content-plans"));
       const plans = saved ? JSON.parse(saved) : [];
       if (!plans.length) return alert("No content plans to export.");
       const blob = new Blob(
@@ -794,7 +867,7 @@ function MainApp({ session, onSignOut }) {
         const parsed = JSON.parse(e.target.result);
         const plans = parsed.data || parsed;
         if (!Array.isArray(plans)) return alert("Invalid content plans file.");
-        localStorage.setItem("content-plans", JSON.stringify(plans));
+        localStorage.setItem(userKey("content-plans"), JSON.stringify(plans));
         alert(
           `Imported ${plans.length} content plan(s)! Refresh or revisit Content Studio to see them.`,
         );
@@ -863,13 +936,17 @@ function MainApp({ session, onSignOut }) {
         type: "full-backup",
         schedule: currentScheduleData,
         trainingPrograms: JSON.parse(
-          localStorage.getItem("training-programs") || "[]",
+          localStorage.getItem(userKey("training-programs")) || "[]",
         ),
-        contentPlans: JSON.parse(localStorage.getItem("content-plans") || "[]"),
+        contentPlans: JSON.parse(
+          localStorage.getItem(userKey("content-plans")) || "[]",
+        ),
         bodyTracking: JSON.parse(
-          localStorage.getItem("body-measurements") || "[]",
+          localStorage.getItem(userKey("body-measurements")) || "[]",
         ),
-        trainingLog: JSON.parse(localStorage.getItem("training-log") || "[]"),
+        trainingLog: JSON.parse(
+          localStorage.getItem(userKey("training-log")) || "[]",
+        ),
         exportedAt: new Date().toISOString(),
       };
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -907,40 +984,40 @@ function MainApp({ session, onSignOut }) {
           setDayInstances(backup.schedule.instances || {});
           setDayProperties(backup.schedule.dayProperties || {});
           localStorage.setItem(
-            "commitment-templates",
+            userKey("commitment-templates"),
             JSON.stringify(backup.schedule.templates || []),
           );
           const wk = backup.schedule.weekKey || getWeekKey(currentWeekStart);
           localStorage.setItem(
-            `week-instances-${wk}`,
+            userKey(`week-instances-${wk}`),
             JSON.stringify(backup.schedule.instances || {}),
           );
           localStorage.setItem(
-            `week-dayprops-${wk}`,
+            userKey(`week-dayprops-${wk}`),
             JSON.stringify(backup.schedule.dayProperties || {}),
           );
         }
         // Training
         if (backup.trainingPrograms)
           localStorage.setItem(
-            "training-programs",
+            userKey("training-programs"),
             JSON.stringify(backup.trainingPrograms),
           );
         if (backup.trainingLog)
           localStorage.setItem(
-            "training-log",
+            userKey("training-log"),
             JSON.stringify(backup.trainingLog),
           );
         // Content
         if (backup.contentPlans)
           localStorage.setItem(
-            "content-plans",
+            userKey("content-plans"),
             JSON.stringify(backup.contentPlans),
           );
         // Body
         if (backup.bodyTracking)
           localStorage.setItem(
-            "body-measurements",
+            userKey("body-measurements"),
             JSON.stringify(backup.bodyTracking),
           );
 
@@ -1228,7 +1305,7 @@ function MainApp({ session, onSignOut }) {
     // Training programs summary
     try {
       const programs = JSON.parse(
-        localStorage.getItem("training-programs") || "[]",
+        localStorage.getItem(userKey("training-programs")) || "[]",
       );
       if (programs.length) {
         html += `<h2>Training Programs</h2><table><tr><th>Program</th><th>Days</th><th>Exercises</th></tr>`;
@@ -1245,7 +1322,9 @@ function MainApp({ session, onSignOut }) {
 
     // Content plans summary
     try {
-      const plans = JSON.parse(localStorage.getItem("content-plans") || "[]");
+      const plans = JSON.parse(
+        localStorage.getItem(userKey("content-plans")) || "[]",
+      );
       if (plans.length) {
         html += `<h2>Content Plans</h2><table><tr><th>Plan</th><th>Items</th><th>Published</th></tr>`;
         plans.forEach((p) => {
@@ -1265,7 +1344,7 @@ function MainApp({ session, onSignOut }) {
   const exportTrainingCSV = () => {
     try {
       const programs = JSON.parse(
-        localStorage.getItem("training-programs") || "[]",
+        localStorage.getItem(userKey("training-programs")) || "[]",
       );
       if (!programs.length) return alert("No training programs to export.");
       const headers = [
@@ -1304,7 +1383,9 @@ function MainApp({ session, onSignOut }) {
   // ─── Export Content Plans as CSV ───
   const exportContentCSV = () => {
     try {
-      const plans = JSON.parse(localStorage.getItem("content-plans") || "[]");
+      const plans = JSON.parse(
+        localStorage.getItem(userKey("content-plans")) || "[]",
+      );
       if (!plans.length) return alert("No content plans to export.");
       const headers = [
         "Plan",
@@ -1384,6 +1465,7 @@ function MainApp({ session, onSignOut }) {
       >
         <Sidebar
           templates={commitmentTemplates}
+          dayInstances={dayInstances}
           onAddTemplate={() => {
             openAddTemplateModal();
             setSidebarOpen(false);
@@ -1733,6 +1815,16 @@ function MainApp({ session, onSignOut }) {
                         <i className="fa-solid fa-cogs text-slate-500 w-4 text-center"></i>
                         Manage Templates
                       </button>
+                      <button
+                        onClick={() => {
+                          clearWeekSchedule();
+                          setShowOptionsMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-3 text-red-500 dark:text-red-400 transition"
+                      >
+                        <i className="fa-solid fa-broom text-red-400 w-4 text-center"></i>
+                        Clear Week Schedule
+                      </button>
 
                       <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
 
@@ -1809,6 +1901,7 @@ function MainApp({ session, onSignOut }) {
                 commitmentTemplates={commitmentTemplates}
                 dayProperties={dayProperties}
                 completedInstances={completedInstances}
+                currentWeekStart={currentWeekStart}
                 onUpdateDayProperty={updateDayProperty}
                 onAddInstance={addInstanceToDay}
                 onRemoveInstance={removeInstanceFromDay}
@@ -1843,6 +1936,7 @@ function MainApp({ session, onSignOut }) {
               commitmentTemplates={commitmentTemplates}
               dayInstances={dayInstances}
               completedInstances={completedInstances}
+              userId={userId}
               onCreateCommitment={(template) => {
                 setCommitmentTemplates((prev) => {
                   // Avoid duplicates
@@ -1852,6 +1946,16 @@ function MainApp({ session, onSignOut }) {
                   return [...prev, template];
                 });
               }}
+              onApplyToSchedule={(instances) => {
+                instances.forEach((inst) => {
+                  addInstanceToDay(
+                    inst.templateId,
+                    inst.dayIndex,
+                    inst.startTime,
+                    inst.endTime,
+                  );
+                });
+              }}
             />
           )}
 
@@ -1859,6 +1963,7 @@ function MainApp({ session, onSignOut }) {
           {currentView === "content" && (
             <ContentView
               commitmentTemplates={commitmentTemplates}
+              userId={userId}
               onCreateCommitment={(template) => {
                 setCommitmentTemplates((prev) => {
                   if (prev.some((t) => String(t.id) === String(template.id))) {
@@ -1886,6 +1991,7 @@ function MainApp({ session, onSignOut }) {
               dayInstances={dayInstances}
               completedInstances={completedInstances}
               commitmentTemplates={commitmentTemplates}
+              userId={userId}
             />
           )}
         </div>
@@ -1893,131 +1999,199 @@ function MainApp({ session, onSignOut }) {
 
       {/* Template Modal */}
 
-      {/* Profile Modal */}
+      {/* Profile Panel — Horizontal */}
       {showProfile && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
-            {/* Profile Header */}
-            <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 px-6 pt-8 pb-14">
-              <button
-                onClick={() => setShowProfile(false)}
-                className="absolute top-4 right-4 text-white/70 hover:text-white text-lg transition"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-              <h3 className="text-lg font-black text-white uppercase tracking-tight">
-                <i className="fa-solid fa-user-circle mr-2"></i>Profile
-              </h3>
-            </div>
-
-            {/* Avatar */}
-            <div className="flex justify-center -mt-10 mb-4">
-              <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-900 shadow-lg flex items-center justify-center">
-                <span className="text-3xl font-black text-blue-600 dark:text-blue-400">
-                  {(session?.user?.email?.[0] || "U").toUpperCase()}
-                </span>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
+            {/* Compact Header */}
+            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center">
+                  <span className="text-xl font-black text-white">
+                    {(session?.user?.email?.[0] || "U").toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white uppercase tracking-tight">
+                    <i className="fa-solid fa-user-circle mr-2"></i>Profile
+                  </h3>
+                  <p className="text-xs text-white/70 truncate max-w-[250px]">
+                    {session?.user?.email || "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setShowProfile(false);
+                    onSignOut();
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white text-xs font-bold transition"
+                >
+                  <i className="fa-solid fa-right-from-bracket mr-1"></i>Sign
+                  Out
+                </button>
+                <button
+                  onClick={() => setShowProfile(false)}
+                  className="text-white/70 hover:text-white text-lg transition p-1"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
               </div>
             </div>
 
-            <div className="px-6 pb-6 space-y-4">
-              {/* Email */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-1">
-                  <i className="fa-solid fa-envelope mr-1"></i> Email
-                </p>
-                <p className="text-sm font-medium text-slate-900 dark:text-white break-all">
-                  {session?.user?.email || "—"}
-                </p>
-              </div>
-
-              {/* User ID */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-1">
-                  <i className="fa-solid fa-fingerprint mr-1"></i> User ID
-                </p>
-                <p className="text-xs font-mono text-slate-500 dark:text-slate-400 break-all">
-                  {session?.user?.id || "—"}
-                </p>
-              </div>
-
-              {/* Account Details */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-2">
-                  <i className="fa-solid fa-shield-halved mr-1"></i> Account
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      Provider
-                    </span>
-                    <span className="font-medium text-slate-900 dark:text-white capitalize">
-                      {session?.user?.app_metadata?.provider || "email"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      Joined
-                    </span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {session?.user?.created_at
-                        ? new Date(session.user.created_at).toLocaleDateString(
-                            "en-US",
-                            {
+            {/* Horizontal Body */}
+            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Column 1: Account Info */}
+              <div className="space-y-3">
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
+                  <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1">
+                    <i className="fa-solid fa-shield-halved mr-1"></i>Account
+                  </p>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Provider
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white capitalize">
+                        {session?.user?.app_metadata?.provider || "email"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Joined
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {session?.user?.created_at
+                          ? new Date(
+                              session.user.created_at,
+                            ).toLocaleDateString("en-US", {
                               year: "numeric",
                               month: "short",
                               day: "numeric",
-                            },
+                            })
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Last Sign In
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {session?.user?.last_sign_in_at
+                          ? new Date(
+                              session.user.last_sign_in_at,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Verified
+                      </span>
+                      <span
+                        className={`font-medium ${session?.user?.email_confirmed_at ? "text-green-600 dark:text-green-400" : "text-orange-500"}`}
+                      >
+                        {session?.user?.email_confirmed_at
+                          ? "✓ Yes"
+                          : "Pending"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
+                  <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1">
+                    <i className="fa-solid fa-fingerprint mr-1"></i>User ID
+                  </p>
+                  <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 break-all">
+                    {session?.user?.id || "—"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Column 2: Commitment Journey */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 flex flex-col justify-center">
+                <p className="text-[10px] font-bold uppercase text-blue-500 dark:text-blue-400 tracking-widest mb-3">
+                  <i className="fa-solid fa-fire mr-1"></i>Commitment Journey
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center">
+                    <p className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                      {(() => {
+                        const joined = session?.user?.created_at;
+                        if (!joined) return "—";
+                        return Math.floor(
+                          (Date.now() - new Date(joined).getTime()) / 86400000,
+                        );
+                      })()}
+                    </p>
+                    <p className="text-[10px] text-blue-400 dark:text-blue-500 font-bold uppercase">
+                      Days Committed
+                    </p>
+                    <p className="text-[9px] text-slate-400 mt-0.5">
+                      since{" "}
+                      {session?.user?.created_at
+                        ? new Date(session.user.created_at).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric", year: "numeric" },
                           )
                         : "—"}
-                    </span>
+                    </p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      Last Sign In
-                    </span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {session?.user?.last_sign_in_at
-                        ? new Date(
-                            session.user.last_sign_in_at,
-                          ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
-                      Email Verified
-                    </span>
-                    <span
-                      className={`font-medium ${session?.user?.email_confirmed_at ? "text-green-600 dark:text-green-400" : "text-orange-500"}`}
-                    >
-                      {session?.user?.email_confirmed_at
-                        ? "Verified ✓"
-                        : "Pending"}
-                    </span>
+                  <div className="text-center">
+                    <p className="text-3xl font-black text-green-600 dark:text-green-400">
+                      {(() => {
+                        const totalScheduled = Object.values(
+                          dayInstances,
+                        ).reduce(
+                          (sum, arr) =>
+                            sum + (Array.isArray(arr) ? arr.length : 0),
+                          0,
+                        );
+                        const totalCompleted = Object.values(
+                          completedInstances,
+                        ).reduce((sum, day) => {
+                          if (typeof day === "object" && day !== null)
+                            return (
+                              sum + Object.values(day).filter(Boolean).length
+                            );
+                          return sum + (day ? 1 : 0);
+                        }, 0);
+                        return totalScheduled > 0
+                          ? Math.round((totalCompleted / totalScheduled) * 100)
+                          : 0;
+                      })()}
+                      %
+                    </p>
+                    <p className="text-[10px] text-green-500 font-bold uppercase">
+                      Completion Rate
+                    </p>
+                    <p className="text-[9px] text-slate-400 mt-0.5">
+                      this week
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* App Stats */}
+              {/* Column 3: Data Stats */}
               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-bold uppercase text-slate-400 tracking-widest mb-2">
-                  <i className="fa-solid fa-chart-pie mr-1"></i> Your Data
+                <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-3">
+                  <i className="fa-solid fa-chart-pie mr-1"></i>Your Data
                 </p>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-lg font-black text-slate-900 dark:text-white">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <p className="text-xl font-black text-purple-600 dark:text-purple-400">
                       {commitmentTemplates.length}
                     </p>
                     <p className="text-[10px] text-slate-400">Templates</p>
                   </div>
-                  <div>
-                    <p className="text-lg font-black text-slate-900 dark:text-white">
+                  <div className="text-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <p className="text-xl font-black text-blue-600 dark:text-blue-400">
                       {Object.values(dayInstances).reduce(
                         (sum, arr) =>
                           sum + (Array.isArray(arr) ? arr.length : 0),
@@ -2026,40 +2200,29 @@ function MainApp({ session, onSignOut }) {
                     </p>
                     <p className="text-[10px] text-slate-400">Scheduled</p>
                   </div>
-                  <div>
-                    <p className="text-lg font-black text-slate-900 dark:text-white">
+                  <div className="text-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <p className="text-xl font-black text-green-600 dark:text-green-400">
                       {Object.values(completedInstances).reduce((sum, day) => {
-                        if (typeof day === "object" && day !== null) {
+                        if (typeof day === "object" && day !== null)
                           return (
                             sum + Object.values(day).filter(Boolean).length
                           );
-                        }
                         return sum + (day ? 1 : 0);
                       }, 0)}
                     </p>
                     <p className="text-[10px] text-slate-400">Completed</p>
                   </div>
+                  <div className="text-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <p className="text-xl font-black text-amber-600 dark:text-amber-400">
+                      {
+                        commitmentTemplates.filter(
+                          (t) => t.category === "training",
+                        ).length
+                      }
+                    </p>
+                    <p className="text-[10px] text-slate-400">Training</p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => setShowProfile(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProfile(false);
-                    onSignOut();
-                  }}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition"
-                >
-                  <i className="fa-solid fa-right-from-bracket mr-1"></i> Sign
-                  Out
-                </button>
               </div>
             </div>
           </div>
@@ -2109,6 +2272,7 @@ function MainApp({ session, onSignOut }) {
           onClose={() => setShowTemplateManager(false)}
           dayInstances={dayInstances}
           commitmentTemplates={commitmentTemplates}
+          userId={userId}
         />
       )}
 

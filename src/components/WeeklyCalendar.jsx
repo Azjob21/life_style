@@ -5,6 +5,7 @@ function WeeklyCalendar({
   commitmentTemplates,
   dayProperties,
   completedInstances,
+  currentWeekStart,
   onUpdateDayProperty,
   onAddInstance,
   onRemoveInstance,
@@ -17,6 +18,19 @@ function WeeklyCalendar({
   const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const [dragOverDay, setDragOverDay] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // Determine if a dayIdx is today or in the past (can be completed)
+  const isDayCompletable = (dayIdx) => {
+    if (!currentWeekStart) return true; // fallback: allow all
+    const weekStart = new Date(currentWeekStart);
+    // Adjust to Monday-based week (dayIdx 0 = Mon)
+    const dayDate = new Date(weekStart);
+    dayDate.setDate(weekStart.getDate() + dayIdx);
+    dayDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return dayDate <= today;
+  };
 
   // Derive available categories from templates
   const categories = useMemo(() => {
@@ -226,20 +240,29 @@ function WeeklyCalendar({
 
                         {/* Hover actions */}
                         <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition space-y-1 p-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleCompletion(dayIdx, instance.id);
-                            }}
-                            className={`w-6 h-6 rounded ${isCompleted ? "bg-green-500" : "bg-slate-700 dark:bg-slate-300"} hover:bg-green-600 flex items-center justify-center text-white text-xs`}
-                            title={
-                              isCompleted
-                                ? "Mark as incomplete"
-                                : "Mark as complete"
-                            }
-                          >
-                            {isCompleted ? "✓" : "○"}
-                          </button>
+                          {isDayCompletable(dayIdx) ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleCompletion(dayIdx, instance.id);
+                              }}
+                              className={`w-6 h-6 rounded ${isCompleted ? "bg-green-500" : "bg-slate-700 dark:bg-slate-300"} hover:bg-green-600 flex items-center justify-center text-white text-xs`}
+                              title={
+                                isCompleted
+                                  ? "Mark as incomplete"
+                                  : "Mark as complete"
+                              }
+                            >
+                              {isCompleted ? "✓" : "○"}
+                            </button>
+                          ) : (
+                            <div
+                              className="w-6 h-6 rounded bg-slate-400/50 flex items-center justify-center text-slate-500 text-xs cursor-not-allowed"
+                              title="Cannot mark future days as complete"
+                            >
+                              <i className="fa-solid fa-lock text-[8px]"></i>
+                            </div>
+                          )}
                           <button
                             onClick={() =>
                               onUpdateInstanceTiming(

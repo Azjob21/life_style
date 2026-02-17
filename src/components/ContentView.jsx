@@ -118,7 +118,9 @@ function ContentView({
   commitmentTemplates,
   onCreateCommitment,
   onApplyContentPlan,
+  userId,
 }) {
+  const userKey = (key) => `${userId || "anonymous"}:${key}`;
   // ─── State ───
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -154,7 +156,7 @@ function ContentView({
   // Load from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("content-plans");
+      const saved = localStorage.getItem(userKey("content-plans"));
       if (saved) setPlans(JSON.parse(saved));
     } catch (e) {
       console.error("Error loading content plans:", e);
@@ -163,7 +165,7 @@ function ContentView({
 
   // Persist
   useEffect(() => {
-    localStorage.setItem("content-plans", JSON.stringify(plans));
+    localStorage.setItem(userKey("content-plans"), JSON.stringify(plans));
   }, [plans]);
 
   // ═══════════════════════════════════════
