@@ -352,11 +352,16 @@ function MainApp({ session, onSignOut }) {
   useEffect(() => {
     const weekKey = getWeekKey(currentWeekStart);
 
-    // Save instances to backend
-    Object.values(dayInstances).forEach((dayInsts) => {
+    // Save instances to backend (use Object.entries to preserve dayIndex)
+    Object.entries(dayInstances).forEach(([dayIdx, dayInsts]) => {
       if (Array.isArray(dayInsts)) {
         dayInsts.forEach((inst) => {
-          const instanceWithWeek = { ...inst, weekId: weekKey };
+          const instanceWithWeek = {
+            ...inst,
+            weekId: weekKey,
+            dayIndex:
+              inst.dayIndex !== undefined ? inst.dayIndex : Number(dayIdx),
+          };
           backend
             .saveScheduleInstance(instanceWithWeek)
             .catch((err) => console.error("Error saving instance:", err));
@@ -489,6 +494,7 @@ function MainApp({ session, onSignOut }) {
     const newInstance = {
       id: `${templateId}-${dayIdx}-${Date.now()}`,
       templateId,
+      dayIndex: dayIdx,
       startTime,
       endTime,
     };
@@ -1406,9 +1412,25 @@ function MainApp({ session, onSignOut }) {
                 <h2 className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 text-slate-900 dark:text-white tracking-tighter uppercase">
                   Weekly Schedule
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
-                  {weekDateRange}
-                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => changeWeek(-1)}
+                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition text-slate-400 dark:text-slate-500"
+                    title="Previous Week"
+                  >
+                    <i className="fa-solid fa-chevron-left text-xs"></i>
+                  </button>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
+                    {weekDateRange}
+                  </p>
+                  <button
+                    onClick={() => changeWeek(1)}
+                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition text-slate-400 dark:text-slate-500"
+                    title="Next Week"
+                  >
+                    <i className="fa-solid fa-chevron-right text-xs"></i>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap items-center">
@@ -1793,9 +1815,6 @@ function MainApp({ session, onSignOut }) {
                 onDropZone={addInstanceViaDropZone}
                 draggedTemplate={draggedTemplate}
                 onOpenDayView={(dayIdx) => setSelectedDayIdx(dayIdx)}
-                weekDateRange={weekDateRange}
-                onPreviousWeek={() => changeWeek(-1)}
-                onNextWeek={() => changeWeek(1)}
               />
 
               {/* Dashboard */}
