@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 function WeeklyCalendar({
   dayInstances,
@@ -16,6 +16,36 @@ function WeeklyCalendar({
 }) {
   const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const [dragOverDay, setDragOverDay] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // Derive available categories from templates
+  const categories = useMemo(() => {
+    const cats = new Set();
+    (commitmentTemplates || []).forEach((t) => {
+      cats.add(t.category || "general");
+    });
+    return ["all", ...Array.from(cats).sort()];
+  }, [commitmentTemplates]);
+
+  // Filter instances by selected category
+  const filteredDayInstances = useMemo(() => {
+    if (categoryFilter === "all") return dayInstances;
+    return dayInstances.map((instances) =>
+      (instances || []).filter((inst) => {
+        const tpl = (commitmentTemplates || []).find(
+          (t) => t.id === inst.templateId,
+        );
+        return (tpl?.category || "general") === categoryFilter;
+      }),
+    );
+  }, [dayInstances, commitmentTemplates, categoryFilter]);
+
+  const CATEGORY_ICONS = {
+    all: "fa-solid fa-layer-group",
+    training: "fa-solid fa-dumbbell",
+    content: "fa-solid fa-pen-nib",
+    general: "fa-solid fa-bookmark",
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -61,10 +91,33 @@ function WeeklyCalendar({
 
   return (
     <div className="mb-8">
+      {/* Category Filter */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mr-1">
+          Filter
+        </span>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategoryFilter(cat)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+              categoryFilter === cat
+                ? "bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm"
+                : "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50"
+            }`}
+          >
+            <i
+              className={`${CATEGORY_ICONS[cat] || "fa-solid fa-tag"} mr-1.5`}
+            ></i>
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        ))}
+      </div>
+
       {/* Day Headers Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 border-b-2 border-slate-200 dark:border-slate-800">
         {DAYS_SHORT.map((day, dayIdx) => {
-          const instances = dayInstances[dayIdx] || [];
+          const instances = filteredDayInstances[dayIdx] || [];
           const isToday =
             new Date().getDay() === (dayIdx === 6 ? 0 : dayIdx + 1);
           return (
@@ -88,7 +141,7 @@ function WeeklyCalendar({
       {/* Day Columns */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {DAYS_SHORT.map((day, dayIdx) => {
-          const instances = dayInstances[dayIdx] || [];
+          const instances = filteredDayInstances[dayIdx] || [];
 
           return (
             <div

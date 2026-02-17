@@ -6,7 +6,7 @@ import CommitmentTemplateModal from "./components/CommitmentTemplateModal";
 import TimingUpdateModal from "./components/TimingUpdateModal";
 import TemplateManager from "./components/TemplateManager";
 import StorageManager from "./components/StorageManager";
-import WeekNavigator from "./components/WeekNavigator";
+// WeekNavigator removed — navigation buttons removed for cleaner layout
 import TrainingView from "./components/TrainingView";
 import ContentView from "./components/ContentView";
 import StatsView from "./components/StatsView";
@@ -1771,13 +1771,6 @@ function MainApp({ session, onSignOut }) {
           {/* VIEW: TIMETABLE */}
           {currentView === "timetable" && (
             <>
-              {/* Week Navigation */}
-              <WeekNavigator
-                onPrevious={() => changeWeek(-1)}
-                onToday={goToToday}
-                onNext={() => changeWeek(1)}
-              />
-
               {/* Weekly Calendar */}
               <WeeklyCalendar
                 dayInstances={dayInstances}
