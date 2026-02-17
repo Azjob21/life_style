@@ -13,6 +13,9 @@ function WeeklyCalendar({
   onDropZone,
   draggedTemplate,
   onOpenDayView,
+  weekDateRange,
+  onPreviousWeek,
+  onNextWeek,
 }) {
   const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const [dragOverDay, setDragOverDay] = useState(null);
@@ -27,17 +30,23 @@ function WeeklyCalendar({
     return ["all", ...Array.from(cats).sort()];
   }, [commitmentTemplates]);
 
-  // Filter instances by selected category
+  // Filter instances by selected category (dayInstances is an object keyed by day index)
   const filteredDayInstances = useMemo(() => {
-    if (categoryFilter === "all") return dayInstances;
-    return dayInstances.map((instances) =>
-      (instances || []).filter((inst) => {
-        const tpl = (commitmentTemplates || []).find(
-          (t) => t.id === inst.templateId,
-        );
-        return (tpl?.category || "general") === categoryFilter;
-      }),
-    );
+    const result = {};
+    for (let i = 0; i < 7; i++) {
+      const instances = dayInstances[i] || [];
+      if (categoryFilter === "all") {
+        result[i] = instances;
+      } else {
+        result[i] = instances.filter((inst) => {
+          const tpl = (commitmentTemplates || []).find(
+            (t) => t.id === inst.templateId,
+          );
+          return (tpl?.category || "general") === categoryFilter;
+        });
+      }
+    }
+    return result;
   }, [dayInstances, commitmentTemplates, categoryFilter]);
 
   const CATEGORY_ICONS = {
@@ -91,6 +100,27 @@ function WeeklyCalendar({
 
   return (
     <div className="mb-8">
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={onPreviousWeek}
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400"
+          title="Previous Week"
+        >
+          <i className="fa-solid fa-chevron-left"></i>
+        </button>
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-wide">
+          {weekDateRange}
+        </span>
+        <button
+          onClick={onNextWeek}
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400"
+          title="Next Week"
+        >
+          <i className="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
       {/* Category Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mr-1">

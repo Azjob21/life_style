@@ -1793,6 +1793,9 @@ function MainApp({ session, onSignOut }) {
                 onDropZone={addInstanceViaDropZone}
                 draggedTemplate={draggedTemplate}
                 onOpenDayView={(dayIdx) => setSelectedDayIdx(dayIdx)}
+                weekDateRange={weekDateRange}
+                onPreviousWeek={() => changeWeek(-1)}
+                onNextWeek={() => changeWeek(1)}
               />
 
               {/* Dashboard */}
